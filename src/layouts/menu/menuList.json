@@ -1,0 +1,82 @@
+[
+  {
+    "id": 1,
+    "authName": "数据共享",
+    "path": "share",
+    "children": [
+      {
+        "id": 4,
+        "authName": "数据模板",
+        "path": "data-template",
+        "children": [],
+        "order": null
+      },
+      {
+        "id": 5,
+        "authName": "数据发布",
+        "path": "data-publish",
+        "children": [],
+        "order": null
+      }
+    ],
+    "order": 1
+  },
+  {
+    "id": 2,
+    "authName": "数据安全",
+    "path": "security",
+    "children": [
+      {
+        "id": 6,
+        "authName": "访问权限",
+        "path": "no-existence",
+        "children": [],
+        "order": null
+      },
+      {
+        "id": 7,
+        "authName": "数据追踪",
+        "path": "no-existence",
+        "children": [],
+        "order": null
+      },
+      {
+        "id": 8,
+        "authName": "统计报表",
+        "path": "no-existence",
+        "children": [],
+        "order": null
+      }
+    ],
+    "order": 2
+  },
+  {
+    "id": 3,
+    "authName": "用户管理",
+    "path": "user",
+    "children": [
+      {
+        "id": 9,
+        "authName": "用户列表",
+        "path": "no-existence",
+        "children": [],
+        "order": null
+      },
+      {
+        "id": 10,
+        "authName": "用户权限",
+        "path": "no-existence",
+        "children": [],
+        "order": null
+      },
+      {
+        "id": 11,
+        "authName": "行为分析",
+        "path": "no-existence",
+        "children": [],
+        "order": null
+      }
+    ],
+    "order": 3
+  }
+]
