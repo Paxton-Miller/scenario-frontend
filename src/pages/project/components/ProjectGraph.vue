@@ -6,72 +6,84 @@
   @version: 1.0
 -->
 
-
 <script setup lang="ts">
 import { Graph } from '@antv/x6'
-import { DeleteFilled, FolderOpened } from '@element-plus/icons-vue'
+import { DeleteFilled, FolderOpened, Refresh } from '@element-plus/icons-vue'
 import { Snapline } from '@antv/x6-plugin-snapline'
+import { ref } from 'vue'
+import { Clipboard } from '@antv/x6-plugin-clipboard'
+import { Selection } from '@antv/x6-plugin-selection'
+import { Keyboard } from '@antv/x6-plugin-keyboard'
+import { History } from '@antv/x6-plugin-history'
+import { Transform } from '@antv/x6-plugin-transform'
+import { ElMessageBox } from 'element-plus'
 import { useContextMenuStore } from '@/store/contextMenu'
 
-// 引入对齐线
 import type { Project } from '@/api/class/Project'
 import { getProjectById } from '@/api/ProjectApi'
 import { ContextMenuTool } from '@/pages/common/components/ContextMenuTool'
+import AddConnectorDialog from '@/pages/project/components/AddConnectorDialog.vue'
+import type { AddConnectorForm } from '@/pages/project/class/Project'
+import {
+  batchAddScenario,
+  batchDelScenario,
+  batchEditScenario,
+  getAllScenarioByProjectId,
+} from '@/api/ScenarioApi'
+import {
+  batchAddScenarioRelation,
+  batchDelScenarioRelation,
+  batchEditScenarioRelation, getAllScenarioRelationByProjectId,
+} from '@/api/ScenarioRelationApi'
+import type { Scenario } from '@/api/class/Scenario'
+import type { ScenarioRelation } from '@/api/class/ScenarioRelation'
 
 const graph = ref<Graph>()
 const route = useRoute()
 const project = ref<Project>()
 const router = useRouter()
 const store = useContextMenuStore()
+const addConnectorDialog = ref<boolean>(false)
+const addNodeTime = ref<number>(0)
+const graphNodes = ref()
+const graphEdges = ref()
+const graphEdgesWithoutId = ref()
+const latestNodes = ref([])
+const latestEdges = ref([])
+const canUndo = ref(true)
+const canRedo = ref(false)
+
+const history = new History({
+  enabled: true,
+})
+
+const Undo = () => {
+  history.undo()
+}
+
+const Redo = () => {
+  history.redo()
+}
 
 const graphData = ref({
-  nodes: [
-    {
-      id: 1,
-      x: 0,
-      y: 0,
-      shape: 'rect',
-      width: 80,
-      height: 40,
-      label: 'hello',
-      ports: [
-        {
-          id: 'out1',
-          attrs: {
-            circle: {
-              r: 6,
-              magnet: true,
-            },
-          },
-        },
-        {
-          id: 'out2',
-          attrs: {
-            circle: {
-              r: 6,
-              magnet: true,
-            },
-          },
-        },
-      ],
-    },
-    {
-      id: 2,
-      x: 160,
-      y: 180,
-      width: 80,
-      height: 40,
-      label: 'world',
-    },
-  ],
-  edges: [
-    {
-      source: 1,
-      target: 2,
-      label: 'derive',
-    },
-  ],
+  nodes: [] as Scenario[],
+  edges: [] as ScenarioRelation[],
 })
+
+const getGraphData = async () => {
+  graphNodes.value = await getAllScenarioByProjectId(project.value?.id as number) as unknown as Scenario[]
+  graphEdges.value = await getAllScenarioRelationByProjectId(project.value?.id as number) as unknown as ScenarioRelation[]
+
+  graphEdgesWithoutId.value = graphEdges.value.map(edge => {
+    // remove the id property
+    const { id, ...edgeWithoutId } = edge
+
+    return edgeWithoutId
+  })
+
+  graphData.value.edges = graphEdgesWithoutId.value
+  graphData.value.nodes = graphNodes.value
+}
 
 const handleZoom = (zoomNumber: number) => {
   graph.value?.zoom(zoomNumber)
@@ -86,21 +98,14 @@ const zoomToFit = () => {
 }
 
 const addNode = () => {
+  addNodeTime.value++
   graph.value?.addNode({
     label: 'untitled',
     shape: 'rect',
-    x: document.getElementById('container')!.offsetWidth / 2 - 100,
-    y: document.getElementById('container')!.offsetHeight / 2 - 50,
+    x: document.getElementById('container')!.offsetWidth / 2 - 100 + addNodeTime.value * 15,
+    y: document.getElementById('container')!.offsetHeight / 2 - 50 + addNodeTime.value * 10,
     width: 80,
     height: 40,
-  })
-}
-
-const addEdge = () => {
-  graph.value?.addEdge({
-    source: 1,
-    target: 2,
-    label: 'edge',
   })
 }
 
@@ -112,7 +117,7 @@ const getProjectDetail = async () => {
 }
 
 const registerNode = () => {
-  Graph.registerNode( // 设置节点基础样式
+  Graph.registerNode( // set the style of node
     'custom-rect',
     {
       inherit: 'rect',
@@ -138,16 +143,48 @@ const registerNode = () => {
   )
 }
 
-const configRemove = () => {
+const openNodeDetail = node => {
+  if (isNaN(node.id)) {
+    ElMessage.info('Please save first')
+  } else {
+    const url = router.resolve({ name: 'Scenario', query: { id: node.id } }).href
+
+    window.open(url, '_blank')
+  }
+}
+
+const deleteCell = () => {
+  // use variables recorded in store to delete cell
+  store.e.stopPropagation()
+  store.view?.cell.remove()
+  console.log(graph.value?.getNodes()[0]?.id, graph.value?.toJSON())
+}
+
+const renameCell = () => {
+  ElMessageBox.prompt('Please rename the cell', 'Tip', {
+    confirmButtonText: 'OK',
+    cancelButtonText: 'Cancel',
+  })
+    .then(({ value }) => {
+      store.e.stopPropagation()
+      if (store.view?.cell.shape === 'rect')
+        store.view.cell.setLabel(value === null ? '' : value)
+      else
+        store.view?.cell.setLabels([{ attrs: { label: { text: value === null ? '' : value } } }])
+
+      // store.view?.cell.setLabels([value === null ? '' : value])
+    })
+    .catch(() => {
+      ElMessage({
+        type: 'info',
+        message: 'Rename canceled',
+      })
+    })
+}
+
+const configureEvents = () => {
+  // configure the node:mouseenter event to generate contextmenu
   graph.value?.on('node:mouseenter', ({ node }) => {
-    /* node.addTools({
-      name: 'button-remove',
-      args: {
-        x: 0,
-        y: 0,
-        offset: { x: 10, y: 10 },
-      },
-    }) */
     node.addTools({
       name: 'contextmenu',
       args: {
@@ -155,20 +192,18 @@ const configRemove = () => {
           {
             label: 'Detail',
             onClick: () => {
-              const url = router.resolve({ name: 'Scenario', query: { id: 1 } }).href
-
-              window.open(url, '_blank')
+              openNodeDetail(node)
             },
             icon: FolderOpened,
           },
           {
+            label: 'Rename',
+            onClick: renameCell,
+            icon: Refresh,
+          },
+          {
             label: 'Delete',
-            onClick: () => {
-              // 调用store里记录的，删除节点
-              store.e.stopPropagation()
-              store.view.cell.remove()
-              console.log(graph.value?.getNodes()[0]?.id, graph.value?.toJSON())
-            },
+            onClick: deleteCell,
             icon: DeleteFilled,
           },
         ],
@@ -178,6 +213,58 @@ const configRemove = () => {
   graph.value?.on('node:mouseleave', ({ node }) => {
     node.removeTools()
   })
+
+  graph.value?.on('node:dblclick', ({ node }) => {
+    openNodeDetail(node)
+  })
+
+  // configure the edge:mouseenter event to generate contextmenu
+  graph.value?.on('edge:mouseenter', ({ edge }) => {
+    edge.addTools({
+      name: 'contextmenu',
+      args: {
+        menu: [
+          {
+            label: 'Rename',
+            onClick: renameCell,
+            icon: Refresh,
+          },
+          {
+            label: 'Delete',
+            onClick: deleteCell,
+            icon: DeleteFilled,
+          },
+        ],
+      },
+    })
+  })
+  graph.value?.on('edge:mouseleave', ({ edge }) => {
+    edge.removeTools()
+  })
+
+  // configure the edge:mouseenter/mouseleave event to set its style
+  graph.value?.on('edge:mouseenter', ({ e, edge, view }) => {
+    edge.attr({
+      line: {
+        stroke: 'lightblue',
+        strokeWidth: 3,
+      },
+    })
+  })
+  graph.value?.on('edge:mouseleave', ({ edge }) => {
+    edge.attr({
+      line: {
+        stroke: 'rgb(51, 51, 51)',
+        strokeWidth: 2,
+      },
+    })
+  })
+
+  // listen to undo and redo
+  graph.value?.on('history:change', e => {
+    canUndo.value = history.canUndo()
+    canRedo.value = history.canRedo()
+  })
 }
 
 const initGraph = () => {
@@ -186,70 +273,256 @@ const initGraph = () => {
     width: 900,
     height: 520,
     autoResize: true,
-    background: { // 背景
+    background: {
       color: '#F2F7FA',
     },
     panning: {
-      enabled: true, // 支持滚动放大缩小
+      enabled: true,
     },
     mousewheel: {
       enabled: true,
-      modifiers: 'Ctrl', // 按住ctrl按键滚动鼠标滚轮缩放
+      modifiers: 'Ctrl', // Press ctrl to zoom in/out
       factor: 1.1,
-      maxScale: 10, // 最大放大
-      minScale: 0.05, // 最小缩小
+      maxScale: 10,
+      minScale: 0.05,
     },
     grid: {
-      visible: true, // 渲染网格背景
+      visible: true,
       type: 'doubleMesh',
       args: [
         {
-          color: '#eee', // 主网格线颜色
-          thickness: 1, // 主网格线宽度
+          color: '#eee',
+          thickness: 1,
         },
         {
-          color: '#ddd', // 次网格线颜色
-          thickness: 1, // 次网格线宽度
-          factor: 4, // 主次网格线间隔
+          color: '#ddd',
+          thickness: 1,
+          factor: 4,
         },
       ],
     },
   })
-  graph.value.use( // 启用对齐线
+
+  // use Snapline
+  graph.value.use(
     new Snapline({
       enabled: true,
     }),
   )
-  graph.value.on('edge:mouseenter', ({ e, edge, view }) => {
-    edge.attr({
-      line: {
-        stroke: 'red',
-        strokeWidth: 3,
+
+  // use Clipboard
+  graph.value.use(
+    new Clipboard({
+      enabled: true,
+    }),
+  )
+
+  // use Selection
+  graph.value.use(
+    new Selection({
+      enabled: true,
+      showNodeSelectionBox: true,
+    }),
+  )
+
+  // use undo and redo
+  graph.value.use(history)
+
+  // use Transform
+  graph.value.use(
+    new Transform({
+      resizing: {
+        enabled: true,
       },
-    })
+      rotating: {
+        enabled: false, // 暂时禁用旋转
+      },
+    }),
+  )
+
+  // use hot keys
+  graph.value.use(
+    new Keyboard({
+      enabled: true,
+      global: true,
+    }),
+  )
+  graph.value.bindKey('ctrl+c', () => {
+    const cells = graph.value?.getSelectedCells()
+    if (cells?.length)
+      graph.value?.copy(cells)
+
+    return false
+  })
+  graph.value.bindKey('ctrl+x', () => {
+    const cells = graph.value?.getSelectedCells()
+    if (cells?.length)
+      graph.value?.cut(cells)
+
+    return false
+  })
+  graph.value.bindKey('backspace', () => {
+    const cells = graph.value?.getSelectedCells()
+    if (cells?.length)
+      graph.value?.removeCells(cells)
+
+    return false
   })
 
-  // 鼠标移出线
-  graph.value.on('edge:mouseleave', ({ edge }) => {
-    edge.attr({
-      line: {
-        stroke: '#8f8f8f',
-        strokeWidth: 1,
-      },
-    })
+  graph.value.bindKey('ctrl+v', () => {
+    if (!graph.value?.isClipboardEmpty()) {
+      const cells = graph.value?.paste({ offset: 32 })
+
+      graph.value?.cleanSelection()
+      graph.value?.select(cells)
+    }
+
+    return false
+  })
+  graph.value.bindKey('ctrl+z', () => {
+    Undo()
+
+    return false
+  })
+  graph.value.bindKey('ctrl+y', () => {
+    Redo()
+
+    return false
   })
 
-  configRemove()
+  configureEvents()
   graph.value.fromJSON(graphData.value)
+}
+
+const handleCloseAdd = async (newInfo: AddConnectorForm) => {
+  if (newInfo === undefined || newInfo.target_id === undefined) {
+    addConnectorDialog.value = false
+
+    return
+  }
+  graph.value?.addEdge({
+    source: newInfo.source_id,
+    target: newInfo.target_id,
+    label: newInfo.label,
+    sourceTag: isNaN(newInfo.source_id) ? 'new' : 'old', // 根据其是不是字符串判定新旧，新创建的一般由graph自动分配uuid，旧的是数据库查询的自增id
+    targetTag: isNaN(newInfo.target_id) ? 'new' : 'old',
+  })
+
+  addConnectorDialog.value = false
+}
+
+const renewGraph = async () => {
+  await getGraphData()
+  graph.value?.fromJSON(graphData.value)
+}
+
+const saveGraph = async () => {
+  const nodesToAdd = []
+  const nodesToEdit = []
+  const nodesToDel = []
+  const edgesToAdd = []
+  const edgesToEdit = []
+  const edgesToDel = []
+
+  const cells = graph.value?.toJSON().cells
+
+  latestNodes.value = []
+  latestEdges.value = []
+  for (let i = 0; i < cells!.length; i++) {
+    if (cells![i].shape === 'rect')
+      latestNodes.value.push(cells![i])
+    else
+      latestEdges.value.push(cells![i])
+  }
+  for (let i = 0; i < latestNodes.value!.length; i++) {
+    // collect the nodes to add
+    if (!graphNodes.value.some(node => node.id == latestNodes.value![i].id)) {
+      nodesToAdd.push({
+        node: latestNodes.value![i].id,
+        label: latestNodes.value![i].attrs!.text.text,
+        projectId: project.value?.id,
+        x: latestNodes.value![i].position.x,
+        y: latestNodes.value![i].position.y,
+        width: latestNodes.value![i].size.width,
+        height: latestNodes.value![i].size.height,
+      })
+    }
+
+    // collect the nodes to edit
+    for (const node of graphNodes.value) {
+      if (node.id == latestNodes.value![i].id) {
+        nodesToEdit.push({
+          id: node.id,
+          label: latestNodes.value![i].attrs!.text.text,
+          projectId: project.value?.id,
+          x: latestNodes.value![i].position.x,
+          y: latestNodes.value![i].position.y,
+          width: latestNodes.value![i].size.width,
+          height: latestNodes.value![i].size.height,
+        })
+      }
+    }
+  }
+
+  // collect the nodes to delete
+  for (const originalNode of graphNodes.value) {
+    if (!latestNodes.value.some(node => node.id == originalNode.id))
+      nodesToDel.push(originalNode.id)
+  }
+
+  const nodesAdded = await batchAddScenario(nodesToAdd) as unknown as Scenario[]
+
+  await batchEditScenario(nodesToEdit)
+  await batchDelScenario(nodesToDel)
+  for (let i = 0; i < latestEdges.value!.length; i++) {
+    // collect the edges to add
+    if (!graphEdges.value.some(edge => edge.source == latestEdges.value![i].source.cell && edge.target == latestEdges.value![i].target.cell)) {
+      edgesToAdd.push({
+        label: latestEdges.value![i].labels === undefined ? '' : latestEdges.value![i].labels[0].attrs.label.text,
+        projectId: project.value?.id,
+
+        // According to the sourceTag created before, if the edge is newly-created, we'll find the element in nodesAdded that uuid(node.node) === edge.source/target.cell. And if the edge already existed before, use source/target.cell instead.
+        source: latestEdges.value![i].sourceTag === 'new' ? nodesAdded.find(node => node.node === latestEdges.value![i].source.cell)?.id : latestEdges.value![i].source.cell,
+        target: latestEdges.value![i].targetTag === 'new' ? nodesAdded.find(node => node.node === latestEdges.value![i].target.cell)?.id : latestEdges.value![i].target.cell,
+      })
+    }
+
+    // collect the edges to edit
+    for (const edge of graphEdges.value) {
+      if (edge.source == latestEdges.value![i].source.cell && edge.target == latestEdges.value![i].target.cell) {
+        edgesToEdit.push({
+          id: edge.id,
+          label: latestEdges.value![i].labels === undefined ? '' : latestEdges.value![i].labels[0].attrs.label.text,
+          projectId: project.value?.id,
+          source: latestEdges.value![i].source.cell,
+          target: latestEdges.value![i].target.cell,
+        })
+      }
+    }
+  }
+
+  // collect the edges to delete
+  for (const originalEdge of graphEdges.value) {
+    if (!latestEdges.value.some(edge => edge.source.cell == originalEdge.source && edge.target.cell == originalEdge.target))
+      edgesToDel.push(originalEdge.id)
+  }
+
+  await batchAddScenarioRelation(edgesToAdd)
+  await batchEditScenarioRelation(edgesToEdit)
+  await batchDelScenarioRelation(edgesToDel)
+  renewGraph()
+  ElMessage.success('Done')
 }
 
 onBeforeMount(() => {
   Graph.registerNodeTool('contextmenu', ContextMenuTool, true)
+  Graph.registerEdgeTool('contextmenu', ContextMenuTool, true)
   registerNode()
 })
 
 onMounted(async () => {
   await getProjectDetail()
+  await getGraphData()
   initGraph()
 })
 </script>
@@ -276,7 +549,7 @@ onMounted(async () => {
             style="margin: 5px"
             type="primary"
             size="small"
-            @click="addEdge"
+            @click="addConnectorDialog = true"
           >
             New Connector
           </ElButton>
@@ -287,7 +560,7 @@ onMounted(async () => {
             style="margin: 5px"
             type="primary"
             size="small"
-            @click="addEdge"
+            @click="saveGraph"
           >
             Save
           </ElButton>
@@ -317,6 +590,13 @@ onMounted(async () => {
   <div style="display: flex;justify-content: center">
     <div id="container" />
   </div>
+  <span style="color: #5a5e66">Hotkey Tips:&nbsp;&nbsp;Ctrl+Z/Y to undo/redo your changes;&nbsp;&nbsp;Ctrl+C/V/X to copy/paste/cut elements;&nbsp;&nbsp;Backspace to delete elements;</span>
+  <AddConnectorDialog
+    v-if="addConnectorDialog"
+    :dialog="addConnectorDialog"
+    :graph="graph"
+    @close-add="handleCloseAdd"
+  />
 </template>
 
 <style scoped lang="scss">

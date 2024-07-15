@@ -9,29 +9,77 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
-import type { AddForm } from '@/pages/project/class/Project'
+import { Graph } from '@antv/x6'
+import type { Node, Edge } from '@antv/x6'
+import type { AddConnectorForm } from '@/pages/project/class/Project'
 
 const props = defineProps({
   dialog: {
     type: Boolean,
     default: true,
   },
+  graph: {
+    type: Graph,
+    default: null,
+  },
 })
 
 const emits = defineEmits(['closeAdd'])
 
-const form = ref<AddForm>({
-  name: '',
-  description: '',
+const form = ref<AddConnectorForm>({
+  source_id: '',
+  target_id: '',
+  label: '',
 })
+
+const sourceOptions = ref([])
+const targetOptions = ref([])
 
 const formRef = ref<FormInstance>()
 
-const rules = reactive<FormRules<AddForm>>({
-  name: [
-    { required: true, message: 'Please name the project', trigger: 'blur' },
+const rules = reactive<FormRules<AddConnectorForm>>({
+  source_id: [
+    { required: true, message: 'Please select the source scenario', trigger: 'blur' },
+  ],
+  target_id: [
+    { required: true, message: 'Please select the target scenario', trigger: 'blur' },
   ],
 })
+
+const getSourceOptions = () => {
+  sourceOptions.value = []
+
+  const nodes = props.graph?.getNodes() as Node[]
+  for (let i = 0; i < nodes?.length; i++) {
+    sourceOptions.value.push({
+      label: nodes[i].label,
+      value: nodes[i].id,
+    })
+  }
+  if (form.value.source_id === '')
+    form.value.source_id = sourceOptions.value[0].value
+}
+
+const getTargetOptions = (sourceId: number | string) => {
+  targetOptions.value = []
+
+  const nodes = props.graph?.getNodes() as Node[]
+  for (let i = 0; i < nodes?.length; i++) {
+    targetOptions.value.push({
+      label: nodes[i].label,
+      value: nodes[i].id,
+    })
+  }
+  const edges = props.graph?.getEdges() as Edge[]
+  for (let i = 0; i < edges?.length; i++) {
+    // 不能构建已有的连接器
+    if (sourceId == edges[i].source.cell)
+      targetOptions.value = targetOptions.value.filter(option => option.value != edges[i].target.cell)
+  }
+
+  // 不能构建指向自己的连接器
+  targetOptions.value = targetOptions.value.filter(option => option.value != form.value.source_id)
+}
 
 const submit = async (formValidator: FormInstance | undefined) => {
   if (!formValidator)
@@ -42,13 +90,18 @@ const submit = async (formValidator: FormInstance | undefined) => {
   })
 }
 
-const handleClose = (info: AddForm) => {
-  if (info.description === undefined)
+const handleClose = (info: AddConnectorForm) => {
+  if (info.target_id === undefined)
     emits('closeAdd')
   else emits('closeAdd', info)
 }
 
-onMounted(async () => {
+onMounted(() => {
+  getSourceOptions()
+})
+
+watch(() => form.value.source_id, val => {
+  getTargetOptions(val)
 })
 </script>
 
@@ -71,18 +124,35 @@ onMounted(async () => {
         label="Source Scenario"
         prop="source_id"
       >
-        <ElInput
-          v-model="form.source_id"
-          placeholder="Please name the project"
-        />
+        <ElSelect v-model="form.source_id">
+          <ElOption
+            v-for="item in sourceOptions"
+            :key="item.value"
+            :label="item.label"
+            :value="item.value"
+          />
+        </ElSelect>
       </ElFormItem>
       <ElFormItem
         label="Target Scenario"
-        prop="description"
+        prop="target_id"
+      >
+        <ElSelect v-model="form.target_id">
+          <ElOption
+            v-for="item in targetOptions"
+            :key="item.value"
+            :label="item.label"
+            :value="item.value"
+          />
+        </ElSelect>
+      </ElFormItem>
+      <ElFormItem
+        label="Connector Label"
+        prop="label"
       >
         <ElInput
-          v-model="form.description"
-          placeholder="Please describe the project"
+          v-model="form.label"
+          placeholder="Please label the connector"
         />
       </ElFormItem>
       <ElButton

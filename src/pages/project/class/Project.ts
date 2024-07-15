@@ -13,3 +13,9 @@ export interface AddForm {
 export interface AddRequest extends AddForm {
 
 }
+
+export interface AddConnectorForm {
+  source_id: number | string
+  target_id: number | string
+  label: string
+}
