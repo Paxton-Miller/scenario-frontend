@@ -11,7 +11,7 @@ import { onMounted, ref } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
 import type { AddForm } from '@/pages/project/class/Project'
 
-const props = defineProps({
+defineProps({
   dialog: {
     type: Boolean,
     default: true,
@@ -36,16 +36,10 @@ const rules = reactive<FormRules<AddForm>>({
 const submit = async (formValidator: FormInstance | undefined) => {
   if (!formValidator)
     return
-  await formValidator.validate(async (valid, fields) => {
+  await formValidator.validate(async valid => {
     if (valid)
       emits('closeAdd', form.value)
   })
-}
-
-const handleClose = (info: AddForm) => {
-  if (info.description === undefined)
-    emits('closeAdd')
-  else emits('closeAdd', info)
 }
 
 onMounted(async () => {
@@ -56,7 +50,7 @@ onMounted(async () => {
   <ElDialog
     :model-value="dialog"
     width="45%"
-    :before-close="handleClose"
+    :before-close="() => emits('closeAdd')"
   >
     <template #header>
       <span>New Project</span>
@@ -94,7 +88,7 @@ onMounted(async () => {
       <ElButton
         type="primary"
         plain
-        @click="handleClose"
+        @click="() => emits('closeAdd')"
       >
         Cancel
       </ElButton>

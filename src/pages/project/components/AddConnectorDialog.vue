@@ -10,8 +10,9 @@
 import { onMounted, ref } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
 import { Graph } from '@antv/x6'
-import type { Node, Edge } from '@antv/x6'
+import type { Edge, Node } from '@antv/x6'
 import type { AddConnectorForm } from '@/pages/project/class/Project'
+import type { ElementOption } from '@/pages/common/class/ElOption'
 
 const props = defineProps({
   dialog: {
@@ -32,8 +33,8 @@ const form = ref<AddConnectorForm>({
   label: '',
 })
 
-const sourceOptions = ref([])
-const targetOptions = ref([])
+const sourceOptions = ref<ElementOption[]>([])
+const targetOptions = ref<ElementOption[]>([])
 
 const formRef = ref<FormInstance>()
 
@@ -52,7 +53,7 @@ const getSourceOptions = () => {
   const nodes = props.graph?.getNodes() as Node[]
   for (let i = 0; i < nodes?.length; i++) {
     sourceOptions.value.push({
-      label: nodes[i].label,
+      label: (nodes[i] as any).label,
       value: nodes[i].id,
     })
   }
@@ -66,15 +67,15 @@ const getTargetOptions = (sourceId: number | string) => {
   const nodes = props.graph?.getNodes() as Node[]
   for (let i = 0; i < nodes?.length; i++) {
     targetOptions.value.push({
-      label: nodes[i].label,
+      label: (nodes[i] as any).label,
       value: nodes[i].id,
     })
   }
   const edges = props.graph?.getEdges() as Edge[]
   for (let i = 0; i < edges?.length; i++) {
     // 不能构建已有的连接器
-    if (sourceId == edges[i].source.cell)
-      targetOptions.value = targetOptions.value.filter(option => option.value != edges[i].target.cell)
+    if (sourceId == (edges[i].source as any).cell)
+      targetOptions.value = targetOptions.value.filter(option => option.value != (edges[i].target as any).cell)
   }
 
   // 不能构建指向自己的连接器
@@ -84,16 +85,12 @@ const getTargetOptions = (sourceId: number | string) => {
 const submit = async (formValidator: FormInstance | undefined) => {
   if (!formValidator)
     return
-  await formValidator.validate(async (valid, fields) => {
+
+  // async (valid, fields)
+  await formValidator.validate(async valid => {
     if (valid)
       emits('closeAdd', form.value)
   })
-}
-
-const handleClose = (info: AddConnectorForm) => {
-  if (info.target_id === undefined)
-    emits('closeAdd')
-  else emits('closeAdd', info)
 }
 
 onMounted(() => {
@@ -109,7 +106,7 @@ watch(() => form.value.source_id, val => {
   <ElDialog
     :model-value="dialog"
     width="45%"
-    :before-close="handleClose"
+    :before-close="() => emits('closeAdd')"
   >
     <template #header>
       <span>New Connector</span>
@@ -164,14 +161,10 @@ watch(() => form.value.source_id, val => {
       <ElButton
         type="primary"
         plain
-        @click="handleClose"
+        @click="() => emits('closeAdd')"
       >
         Cancel
       </ElButton>
     </ElForm>
   </ElDialog>
 </template>
-
-<style scoped lang="scss">
-
-</style>

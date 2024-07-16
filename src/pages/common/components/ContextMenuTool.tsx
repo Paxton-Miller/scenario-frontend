@@ -6,15 +6,15 @@ import { useContextMenuStore } from '@/store/contextMenu'
 const store = useContextMenuStore()
 
 // ContextMenu挂载的Vue实例
-let app = null
-let timer = null // timer
+let app: any = null
+let timer: any = null // timer
 
 class ContextMenuTool extends ToolsView.ToolItem {
-  toggleContextMenu(visible, pos) {
+  toggleContextMenu(visible: any, pos: any) {
     if (app) {
       // 清空上次内容
       app.unmount()
-      document.getElementById('graph-dropdown').innerHTML = ''
+      document.getElementById('graph-dropdown')!.innerHTML = ''
       app = null
     }
     document.removeEventListener('mousedown', this.onMouseDown)
@@ -27,10 +27,10 @@ class ContextMenuTool extends ToolsView.ToolItem {
           {{
             default: () => {
               // menu是在createEdge传入的args
-              if (Array.isArray(this.options.menu)) {
+              if (Array.isArray((this.options as any).menu)) {
                 return <div style="padding: 5px;">
                   {
-                    this.options.menu.map(item => {
+                    (this.options as any).menu.map((item: any) => {
                       return <ElButton style="margin-left: 0;display:block;border: 0;" icon={item.icon}
                         onClick={item.onClick}>{item.label}</ElButton>
                     })
@@ -42,7 +42,8 @@ class ContextMenuTool extends ToolsView.ToolItem {
         </ElDropdown>)
 
       // 减去本身元素的宽高
-      document.getElementById('graph-dropdown').style = `left: ${pos.x - 40}px;top: ${pos.y - 40}px;`
+      document.getElementById('graph-dropdown')!.style.left = `${pos.x - 40}px`
+      document.getElementById('graph-dropdown')!.style.top = `${pos.y - 40}px`
       app.mount('#graph-dropdown')
       document.addEventListener('mousedown', this.onMouseDown)
     }
@@ -50,11 +51,12 @@ class ContextMenuTool extends ToolsView.ToolItem {
 
   onMouseDown = () => {
     timer = window.setTimeout(() => {
-      this.toggleContextMenu(false)
+      this.toggleContextMenu(false, false)
     }, 200)
   }
 
-  onContextMenu({ e, x, y, cell, view }) {
+  onContextMenu({ e, x, y, cell, view }: any) {
+    // eslint-disable-next-line no-restricted-syntax
     debugger
     if (timer) {
       clearTimeout(timer)

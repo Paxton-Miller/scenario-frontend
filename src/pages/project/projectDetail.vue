@@ -13,7 +13,3 @@ import ProjectGraph from '@/pages/project/components/ProjectGraph.vue'
 <template>
   <ProjectGraph />
 </template>
-
-<style scoped lang="scss">
-
-</style>

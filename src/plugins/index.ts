@@ -6,12 +6,14 @@
  * @version: 1.0
  */
 import type { App } from 'vue'
+import ant from 'ant-design-vue'
 import { router } from '@/plugins/router/index'
 import { store } from '@/plugins/pinia'
 import { registerElIcons } from '@/plugins/el-icons'
 
 export const registerPlugins = (app: App) => {
   app.use(router)
+  app.use(ant)
   app.use(store)
   registerElIcons(app)
 }

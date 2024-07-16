@@ -7,6 +7,7 @@
 -->
 
 <script setup lang="ts">
+import type { Cell } from '@antv/x6'
 import { Graph } from '@antv/x6'
 import { DeleteFilled, FolderOpened, Refresh } from '@element-plus/icons-vue'
 import { Snapline } from '@antv/x6-plugin-snapline'
@@ -48,8 +49,8 @@ const addNodeTime = ref<number>(0)
 const graphNodes = ref()
 const graphEdges = ref()
 const graphEdgesWithoutId = ref()
-const latestNodes = ref([])
-const latestEdges = ref([])
+const latestNodes = ref<Cell[]>([])
+const latestEdges = ref<Cell[]>([])
 const canUndo = ref(true)
 const canRedo = ref(false)
 
@@ -74,8 +75,9 @@ const getGraphData = async () => {
   graphNodes.value = await getAllScenarioByProjectId(project.value?.id as number) as unknown as Scenario[]
   graphEdges.value = await getAllScenarioRelationByProjectId(project.value?.id as number) as unknown as ScenarioRelation[]
 
-  graphEdgesWithoutId.value = graphEdges.value.map(edge => {
+  graphEdgesWithoutId.value = graphEdges.value.map((edge: any) => {
     // remove the id property
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { id, ...edgeWithoutId } = edge
 
     return edgeWithoutId
@@ -143,10 +145,12 @@ const registerNode = () => {
   )
 }
 
-const openNodeDetail = node => {
+const openNodeDetail = (node: any) => {
+  // eslint-disable-next-line
   if (isNaN(node.id)) {
     ElMessage.info('Please save first')
-  } else {
+  }
+  else {
     const url = router.resolve({ name: 'Scenario', query: { id: node.id } }).href
 
     window.open(url, '_blank')
@@ -168,9 +172,9 @@ const renameCell = () => {
     .then(({ value }) => {
       store.e.stopPropagation()
       if (store.view?.cell.shape === 'rect')
-        store.view.cell.setLabel(value === null ? '' : value)
+        (store.view?.cell as any).setLabel(value === null ? '' : value)
       else
-        store.view?.cell.setLabels([{ attrs: { label: { text: value === null ? '' : value } } }])
+        (store.view?.cell as any).setLabels([{ attrs: { label: { text: value === null ? '' : value } } }])
 
       // store.view?.cell.setLabels([value === null ? '' : value])
     })
@@ -243,7 +247,7 @@ const configureEvents = () => {
   })
 
   // configure the edge:mouseenter/mouseleave event to set its style
-  graph.value?.on('edge:mouseenter', ({ e, edge, view }) => {
+  graph.value?.on('edge:mouseenter', ({ edge }) => {
     edge.attr({
       line: {
         stroke: 'lightblue',
@@ -261,7 +265,7 @@ const configureEvents = () => {
   })
 
   // listen to undo and redo
-  graph.value?.on('history:change', e => {
+  graph.value?.on('history:change', () => {
     canUndo.value = history.canUndo()
     canRedo.value = history.canRedo()
   })
@@ -374,7 +378,8 @@ const initGraph = () => {
       const cells = graph.value?.paste({ offset: 32 })
 
       graph.value?.cleanSelection()
-      graph.value?.select(cells)
+      if (cells?.length)
+        graph.value?.select(cells)
     }
 
     return false
@@ -391,7 +396,7 @@ const initGraph = () => {
   })
 
   configureEvents()
-  graph.value.fromJSON(graphData.value)
+  graph.value.fromJSON(graphData.value as any)
 }
 
 const handleCloseAdd = async (newInfo: AddConnectorForm) => {
@@ -400,20 +405,22 @@ const handleCloseAdd = async (newInfo: AddConnectorForm) => {
 
     return
   }
-  graph.value?.addEdge({
+
+  /* eslint-disable */
+  (graph.value as any).addEdge({
     source: newInfo.source_id,
     target: newInfo.target_id,
     label: newInfo.label,
-    sourceTag: isNaN(newInfo.source_id) ? 'new' : 'old', // 根据其是不是字符串判定新旧，新创建的一般由graph自动分配uuid，旧的是数据库查询的自增id
-    targetTag: isNaN(newInfo.target_id) ? 'new' : 'old',
+    sourceTag: isNaN(newInfo.source_id as any) ? 'new' : 'old', // 根据其是不是字符串判定新旧，新创建的一般由graph自动分配uuid，旧的是数据库查询的自增id
+    targetTag: isNaN(newInfo.target_id as any) ? 'new' : 'old',
   })
-
+  /* eslint-disable */
   addConnectorDialog.value = false
 }
 
 const renewGraph = async () => {
   await getGraphData()
-  graph.value?.fromJSON(graphData.value)
+  graph.value?.fromJSON(graphData.value as any)
 }
 
 const saveGraph = async () => {
@@ -430,35 +437,35 @@ const saveGraph = async () => {
   latestEdges.value = []
   for (let i = 0; i < cells!.length; i++) {
     if (cells![i].shape === 'rect')
-      latestNodes.value.push(cells![i])
+      latestNodes.value.push(cells![i] as any)
     else
-      latestEdges.value.push(cells![i])
+      latestEdges.value.push(cells![i] as any)
   }
-  for (let i = 0; i < latestNodes.value!.length; i++) {
+  for (let nodeValue of latestNodes.value) {
     // collect the nodes to add
-    if (!graphNodes.value.some(node => node.id == latestNodes.value![i].id)) {
+    if (!graphNodes.value.some((node: any) => node.id == nodeValue.id)) {
       nodesToAdd.push({
-        node: latestNodes.value![i].id,
-        label: latestNodes.value![i].attrs!.text.text,
+        node: nodeValue.id,
+        label: nodeValue.attrs!.text.text,
         projectId: project.value?.id,
-        x: latestNodes.value![i].position.x,
-        y: latestNodes.value![i].position.y,
-        width: latestNodes.value![i].size.width,
-        height: latestNodes.value![i].size.height,
+        x: (nodeValue as any).position.x,
+        y: (nodeValue as any).position.y,
+        width: (nodeValue as any).size.width,
+        height: (nodeValue as any).size.height,
       })
     }
 
     // collect the nodes to edit
     for (const node of graphNodes.value) {
-      if (node.id == latestNodes.value![i].id) {
+      if (node.id == nodeValue.id) {
         nodesToEdit.push({
           id: node.id,
-          label: latestNodes.value![i].attrs!.text.text,
+          label: nodeValue.attrs!.text.text,
           projectId: project.value?.id,
-          x: latestNodes.value![i].position.x,
-          y: latestNodes.value![i].position.y,
-          width: latestNodes.value![i].size.width,
-          height: latestNodes.value![i].size.height,
+          x: (nodeValue as any).position.x,
+          y: (nodeValue as any).position.y,
+          width: (nodeValue as any).size.width,
+          height: (nodeValue as any).size.height,
         })
       }
     }
@@ -474,28 +481,28 @@ const saveGraph = async () => {
 
   await batchEditScenario(nodesToEdit)
   await batchDelScenario(nodesToDel)
-  for (let i = 0; i < latestEdges.value!.length; i++) {
+  for (let edgeValue of latestEdges.value) {
     // collect the edges to add
-    if (!graphEdges.value.some(edge => edge.source == latestEdges.value![i].source.cell && edge.target == latestEdges.value![i].target.cell)) {
+    if (!graphEdges.value.some((edge: any) => edge.source == (edgeValue as any).source.cell && edge.target == (edgeValue as any).target.cell)) {
       edgesToAdd.push({
-        label: latestEdges.value![i].labels === undefined ? '' : latestEdges.value![i].labels[0].attrs.label.text,
+        label: (edgeValue as any).labels === undefined ? '' : (edgeValue as any).labels[0].attrs.label.text,
         projectId: project.value?.id,
 
         // According to the sourceTag created before, if the edge is newly-created, we'll find the element in nodesAdded that uuid(node.node) === edge.source/target.cell. And if the edge already existed before, use source/target.cell instead.
-        source: latestEdges.value![i].sourceTag === 'new' ? nodesAdded.find(node => node.node === latestEdges.value![i].source.cell)?.id : latestEdges.value![i].source.cell,
-        target: latestEdges.value![i].targetTag === 'new' ? nodesAdded.find(node => node.node === latestEdges.value![i].target.cell)?.id : latestEdges.value![i].target.cell,
+        source: (edgeValue as any).sourceTag === 'new' ? nodesAdded.find(node => node.node === (edgeValue as any).source.cell)?.id : (edgeValue as any).source.cell,
+        target: (edgeValue as any).targetTag === 'new' ? nodesAdded.find(node => node.node === (edgeValue as any).target.cell)?.id : (edgeValue as any).target.cell,
       })
     }
 
     // collect the edges to edit
     for (const edge of graphEdges.value) {
-      if (edge.source == latestEdges.value![i].source.cell && edge.target == latestEdges.value![i].target.cell) {
+      if (edge.source == (edgeValue as any).source.cell && edge.target == (edgeValue as any).target.cell) {
         edgesToEdit.push({
           id: edge.id,
-          label: latestEdges.value![i].labels === undefined ? '' : latestEdges.value![i].labels[0].attrs.label.text,
+          label: (edgeValue as any).labels === undefined ? '' : (edgeValue as any).labels[0].attrs.label.text,
           projectId: project.value?.id,
-          source: latestEdges.value![i].source.cell,
-          target: latestEdges.value![i].target.cell,
+          source: (edgeValue as any).source.cell,
+          target: (edgeValue as any).target.cell,
         })
       }
     }
@@ -503,7 +510,7 @@ const saveGraph = async () => {
 
   // collect the edges to delete
   for (const originalEdge of graphEdges.value) {
-    if (!latestEdges.value.some(edge => edge.source.cell == originalEdge.source && edge.target.cell == originalEdge.target))
+    if (!latestEdges.value.some((edge: any) => edge.source.cell == originalEdge.source && edge.target.cell == originalEdge.target))
       edgesToDel.push(originalEdge.id)
   }
 
@@ -533,8 +540,9 @@ onMounted(async () => {
       <div style="display: flex; align-items: center; justify-content: space-between;">
         <div>
           <h3 style="display: inline-block">
-            {{ project?.name }}
+            {{ project?.name }} -- Project Detail
           </h3>
+          &nbsp;
           <ElButton
             icon="plus"
             style="margin: 5px"

@@ -23,9 +23,9 @@ const props = defineProps({
 <template>
   <div class="navbar">
     <RouterLink to="/admin/project">
-      <h3 v-if="showTitle">
+      <h2 v-if="showTitle">
         Scenario Construction System
-      </h3>
+      </h2>
     </RouterLink>
     <Hamburger v-if="showHamburger" />
     <Breadcrumb v-if="showBreadcrumb" />

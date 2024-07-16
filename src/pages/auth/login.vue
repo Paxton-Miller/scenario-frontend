@@ -32,7 +32,7 @@ const router = useRouter()
 const submit = async (formValidator: FormInstance | undefined) => {
   if (!formValidator)
     return
-  await formValidator.validate(async (valid, fields) => {
+  await formValidator.validate(async valid => {
     if (valid) {
       const { token } = await login(form.value) as unknown as LoginResponse
       if (token) {

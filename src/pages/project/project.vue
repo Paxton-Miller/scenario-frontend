@@ -21,12 +21,12 @@ const addDialog = ref<boolean>(false)
 
 const handleSearch = () => {
   if (cardListRef.value)
-    cardListRef.value.handleSearch()
+    (cardListRef.value as any).handleSearch()
 }
 
 const handleClear = () => {
   if (cardListRef.value)
-    cardListRef.value.getTableData()
+    (cardListRef.value as any).getTableData()
 }
 
 const handleCloseAdd = async (newInfo: AddForm) => {
@@ -84,7 +84,3 @@ const handleCloseAdd = async (newInfo: AddForm) => {
     @close-add="handleCloseAdd"
   />
 </template>
-
-<style scoped lang="scss">
-
-</style>
