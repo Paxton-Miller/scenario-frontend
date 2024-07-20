@@ -1,4 +1,4 @@
-import FlowGraph from '../../../graph/index';
+import FlowGraph from '@/pages/scenario/components/Graph/index';
 
 export function gridOpt(globalGridAttr: any) {
   let options;

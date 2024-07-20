@@ -29,6 +29,12 @@ export const routes = [
     ],
   },
   {
+    name: 'Invite',
+    path: '/invite',
+    component: () => import('@/pages/invite/invite.vue'),
+    meta: { requiresAuth: true, role: 'admin' },
+  },
+  {
     name: 'Project',
     path: '/admin',
     component: () => import('@/layouts/horizontal.vue'),

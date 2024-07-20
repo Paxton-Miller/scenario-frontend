@@ -1,20 +1,20 @@
-import { Graph, Dom, Node } from '@antv/x6';
+import { Dom, Graph, Node } from '@antv/x6'
 
 export const FlowChartRect = Graph.registerNode('flow-chart-rect', {
   inherit: 'rect',
   width: 80,
   height: 42,
   attrs: {
-    body: {
+    'body': {
       stroke: '#5F95FF',
       strokeWidth: 1,
       fill: '#ffffff',
     },
-    fo: {
+    'fo': {
       refWidth: '100%',
       refHeight: '100%',
     },
-    foBody: {
+    'foBody': {
       xmlns: Dom.ns.xhtml,
       style: {
         width: '100%',
@@ -34,7 +34,7 @@ export const FlowChartRect = Graph.registerNode('flow-chart-rect', {
         color: 'rgba(0,0,0,0.85)',
       },
     },
-    text: {
+    'text': {
       fontSize: 12,
       fill: '#080808',
     },
@@ -144,7 +144,7 @@ export const FlowChartRect = Graph.registerNode('flow-chart-rect', {
       },
     ],
   },
-});
+})
 
 export const FlowChartImageRect = Graph.registerNode('flow-chart-image-rect', {
   inherit: 'rect',
@@ -158,25 +158,25 @@ export const FlowChartImageRect = Graph.registerNode('flow-chart-image-rect', {
     },
     image: {
       'xlink:href': 'https://gw.alipayobjects.com/zos/antfincdn/FLrTNDvlna/antv.png',
-      width: 16,
-      height: 16,
-      x: 12,
-      y: 12,
+      'width': 16,
+      'height': 16,
+      'x': 12,
+      'y': 12,
     },
     title: {
-      text: 'Node',
-      refX: 40,
-      refY: 14,
-      fill: 'rgba(0,0,0,0.85)',
-      fontSize: 12,
+      'text': 'Node',
+      'refX': 40,
+      'refY': 14,
+      'fill': 'rgba(0,0,0,0.85)',
+      'fontSize': 12,
       'text-anchor': 'start',
     },
     text: {
-      text: 'this is content text',
-      refX: 40,
-      refY: 38,
-      fontSize: 12,
-      fill: 'rgba(0,0,0,0.6)',
+      'text': 'this is content text',
+      'refX': 40,
+      'refY': 38,
+      'fontSize': 12,
+      'fill': 'rgba(0,0,0,0.6)',
       'text-anchor': 'start',
     },
   },
@@ -276,7 +276,121 @@ export const FlowChartImageRect = Graph.registerNode('flow-chart-image-rect', {
       },
     ],
   },
-});
+})
+
+export const FlowImageRect = Graph.registerNode('flow-image-rect', {
+  inherit: 'rect',
+  width: 200,
+  height: 60,
+  attrs: {
+    body: {
+      stroke: '#5F95FF',
+      strokeWidth: 1,
+      fill: 'rgba(95,149,255,0.05)',
+    },
+    image: {
+      'xlink:href': 'https://gw.alipayobjects.com/zos/antfincdn/FLrTNDvlna/antv.png',
+      'width': 16,
+      'height': 16,
+    },
+  },
+  markup: [
+    {
+      tagName: 'rect',
+      selector: 'body',
+    },
+    {
+      tagName: 'image',
+      selector: 'image',
+    },
+    {
+      tagName: 'text',
+      selector: 'title',
+    },
+    {
+      tagName: 'text',
+      selector: 'text',
+    },
+  ],
+  ports: {
+    groups: {
+      top: {
+        position: 'top',
+        attrs: {
+          circle: {
+            r: 3,
+            magnet: true,
+            stroke: '#5F95FF',
+            strokeWidth: 1,
+            fill: '#fff',
+            style: {
+              visibility: 'hidden',
+            },
+          },
+        },
+      },
+      right: {
+        position: 'right',
+        attrs: {
+          circle: {
+            r: 3,
+            magnet: true,
+            stroke: '#5F95FF',
+            strokeWidth: 1,
+            fill: '#fff',
+            style: {
+              visibility: 'hidden',
+            },
+          },
+        },
+      },
+      bottom: {
+        position: 'bottom',
+        attrs: {
+          circle: {
+            r: 3,
+            magnet: true,
+            stroke: '#5F95FF',
+            strokeWidth: 1,
+            fill: '#fff',
+            style: {
+              visibility: 'hidden',
+            },
+          },
+        },
+      },
+      left: {
+        position: 'left',
+        attrs: {
+          circle: {
+            r: 3,
+            magnet: true,
+            stroke: '#5F95FF',
+            strokeWidth: 1,
+            fill: '#fff',
+            style: {
+              visibility: 'hidden',
+            },
+          },
+        },
+      },
+    },
+    items: [
+      {
+        group: 'top',
+      },
+      {
+        group: 'right',
+      },
+      {
+        group: 'bottom',
+      },
+      {
+        group: 'left',
+      },
+    ],
+  },
+})
 
 export const FlowChartTitleRect = Graph.registerNode('flow-chart-title-rect', {
   inherit: 'rect',
@@ -296,24 +410,24 @@ export const FlowChartTitleRect = Graph.registerNode('flow-chart-title-rect', {
     },
     image: {
       'xlink:href': 'https://gw.alipayobjects.com/zos/antfincdn/FLrTNDvlna/antv.png',
-      height: 16,
-      x: 6,
-      y: 6,
+      'height': 16,
+      'x': 6,
+      'y': 6,
     },
     title: {
-      text: 'Node',
-      refX: 30,
-      refY: 9,
-      fill: '#ffffff',
-      fontSize: 12,
+      'text': 'Node',
+      'refX': 30,
+      'refY': 9,
+      'fill': '#ffffff',
+      'fontSize': 12,
       'text-anchor': 'start',
     },
     text: {
-      text: 'this is content text',
-      refX: 8,
-      refY: 45,
-      fontSize: 12,
-      fill: 'rgba(0,0,0,0.6)',
+      'text': 'this is content text',
+      'refX': 8,
+      'refY': 45,
+      'fontSize': 12,
+      'fill': 'rgba(0,0,0,0.6)',
       'text-anchor': 'start',
     },
   },
@@ -417,7 +531,7 @@ export const FlowChartTitleRect = Graph.registerNode('flow-chart-title-rect', {
       },
     ],
   },
-});
+})
 
 export const FlowChartAnimateText = Graph.registerNode('flow-chart-animate-text', {
   inherit: 'rect',
@@ -440,6 +554,84 @@ export const FlowChartAnimateText = Graph.registerNode('flow-chart-animate-text'
       fontSize: 32,
     },
   },
+  ports: {
+    groups: {
+      top: {
+        position: 'top',
+        attrs: {
+          circle: {
+            r: 3,
+            magnet: true,
+            stroke: '#5F95FF',
+            strokeWidth: 1,
+            fill: '#fff',
+            style: {
+              visibility: 'hidden',
+            },
+          },
+        },
+      },
+      right: {
+        position: 'right',
+        attrs: {
+          circle: {
+            r: 3,
+            magnet: true,
+            stroke: '#5F95FF',
+            strokeWidth: 1,
+            fill: '#fff',
+            style: {
+              visibility: 'hidden',
+            },
+          },
+        },
+      },
+      bottom: {
+        position: 'bottom',
+        attrs: {
+          circle: {
+            r: 3,
+            magnet: true,
+            stroke: '#5F95FF',
+            strokeWidth: 1,
+            fill: '#fff',
+            style: {
+              visibility: 'hidden',
+            },
+          },
+        },
+      },
+      left: {
+        position: 'left',
+        attrs: {
+          circle: {
+            r: 3,
+            magnet: true,
+            stroke: '#5F95FF',
+            strokeWidth: 1,
+            fill: '#fff',
+            style: {
+              visibility: 'hidden',
+            },
+          },
+        },
+      },
+    },
+    items: [
+      {
+        group: 'top',
+      },
+      {
+        group: 'right',
+      },
+      {
+        group: 'bottom',
+      },
+      {
+        group: 'left',
+      },
+    ],
+  },
   markup: [
     {
       tagName: 'rect',
@@ -454,29 +646,30 @@ export const FlowChartAnimateText = Graph.registerNode('flow-chart-animate-text'
       selector: 'text2',
     },
   ],
-});
+})
 
 export class NodeGroup extends Node {
-  private collapsed = true;
+  private collapsed = true
 
   protected postprocess() {
-    this.toggleCollapse(true);
+    this.toggleCollapse(true)
   }
 
   isCollapsed() {
-    return this.collapsed;
+    return this.collapsed
   }
 
   toggleCollapse(collapsed?: boolean) {
-    const target = collapsed == null ? !this.collapsed : collapsed;
+    const target = collapsed == null ? !this.collapsed : collapsed
     if (target) {
-      this.attr('buttonSign', { d: 'M 1 5 9 5 M 5 1 5 9' });
-      this.resize(200, 40);
-    } else {
-      this.attr('buttonSign', { d: 'M 2 5 8 5' });
-      this.resize(240, 240);
+      this.attr('buttonSign', { d: 'M 1 5 9 5 M 5 1 5 9' })
+      this.resize(200, 40)
     }
-    this.collapsed = target;
+    else {
+      this.attr('buttonSign', { d: 'M 2 5 8 5' })
+      this.resize(240, 240)
+    }
+    this.collapsed = target
   }
 }
 
@@ -510,7 +703,7 @@ NodeGroup.config({
           tagName: 'path',
           selector: 'buttonSign',
           attrs: {
-            fill: 'none',
+            'fill': 'none',
             'pointer-events': 'none',
           },
         },
@@ -527,10 +720,10 @@ NodeGroup.config({
     },
     image: {
       'xlink:href': 'https://gw.alipayobjects.com/mdn/rms_0b51a4/afts/img/A*X4e0TrDsEiIAAAAAAAAAAAAAARQnAQ',
-      width: 16,
-      height: 16,
-      x: 8,
-      y: 12,
+      'width': 16,
+      'height': 16,
+      'x': 8,
+      'y': 12,
     },
     text: {
       fontSize: 12,
@@ -559,6 +752,6 @@ NodeGroup.config({
       stroke: '#808080',
     },
   },
-});
+})
 
-Graph.registerNode('groupNode', NodeGroup);
+Graph.registerNode('groupNode', NodeGroup)

@@ -1,11 +1,13 @@
 <script lang="ts" setup>
 import { onMounted, ref } from 'vue'
-import './reset/reset.less'
-import './reset/global.css'
-import './index.less'
+import '@/pages/scenario/css/reset/reset.less'
+import '@/pages/scenario/css/reset/global.css'
+import './css/index.less'
 import type { Graph } from '@antv/x6'
-import FlowGraph from './graph'
+import { Pane, Splitpanes } from 'splitpanes'
+import FlowGraph from './components/Graph'
 import { getScenarioGraphJsonById, saveScenarioGraphJsonById } from '@/api/ScenarioApi'
+import 'splitpanes/dist/splitpanes.css'
 
 const route = useRoute()
 const graph = ref<Graph>()
@@ -27,8 +29,13 @@ const saveGraph = async () => {
 
 const initGraph = async () => {
   const data = await getScenarioGraphJsonById(route.query.id as unknown as number)
-
-  graph.value = FlowGraph.init(data)
+  if (data) {
+    graph.value = FlowGraph.init(data)
+  } else {
+    graph.value = FlowGraph.init({
+      cells: [],
+    })
+  }
 
   isReady.value = true
 
@@ -54,25 +61,29 @@ onMounted(() => {
 <template>
   <div class="wrap">
     <div class="content">
-      <!-- 左侧工具栏 -->
-      <div
-        id="stencil"
-        class="sider"
-      />
-      <div class="panel">
-        <!-- 流程图画板 -->
-        <div
-          id="container"
-          class="x6-graph"
+      <Splitpanes class="default-theme" style="height: 400px">
+        <!-- 左侧工具栏 -->
+        <Pane
+          id="stencil"
+          class="sider"
         />
-      </div>
-      <!-- 右侧工具栏 -->
-      <div class="config">
-        <ElButton @click="saveGraph">
-          Save
-        </ElButton>
-        <!--        <ConfigPanel v-if="isReady" /> -->
-      </div>
+        <Pane class="panel">
+          <!-- 流程图画板 -->
+          <div
+            id="container"
+            class="x6-graph"
+          />
+        </Pane>
+        <!-- 右侧工具栏 -->
+        <Pane class="config">
+          <ElButton @click="saveGraph">
+            Save
+          </ElButton>
+          <ChatPanel />
+          <ToolPanel />
+          <!--        <ConfigPanel v-if="isReady" /> -->
+        </Pane>
+      </Splitpanes>
     </div>
   </div>
 </template>

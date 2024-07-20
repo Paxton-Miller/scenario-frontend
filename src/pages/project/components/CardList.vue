@@ -7,8 +7,9 @@
 -->
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { getAllProject } from '@/api/ProjectApi'
+import { getAllMyOwnProject } from '@/api/ProjectApi'
 import type { GetAllProjectResponse, Project } from '@/api/class/Project'
+import NoData from '@/pages/common/NoData.vue'
 
 const props = defineProps({
   queryContent: {
@@ -30,7 +31,7 @@ const handleSearch = () => {
 }
 
 const getTableData = async () => {
-  const result = await getAllProject(page.value, pageSize.value) as unknown as GetAllProjectResponse
+  const result = await getAllMyOwnProject(page.value, pageSize.value) as unknown as GetAllProjectResponse
   if (result) {
     tableData.value = result.list
     page.value = result.page
@@ -124,7 +125,7 @@ onMounted(async () => {
             </div>
             <div style="display: flex;align-items: center">
               <RouterLink
-                :to="{ name: 'ProjectDetail', query: { id: item.id }  }"
+                :to="{ name: 'ProjectDetail', query: { id: item.id } }"
                 target="_blank"
               >
                 <ElButton
@@ -139,6 +140,8 @@ onMounted(async () => {
         </ElCard>
       </ElCol>
     </ElRow>
+
+    <NoData v-if="totalCount === 0" />
 
     <ElPagination
       v-model:current-page="page"

@@ -1,8 +1,16 @@
+<!--
+  @name: [...accessDenied]
+  @description: TODO
+  @author: Lingkai Shi
+  @date: 7/20/2024 10:36 PM
+  @version: 1.0
+-->
+
 <script setup lang="ts">
 const props = defineProps({
   content: {
     type: String,
-    default: 'Oops, the page you\'re looking for doesn\'t exist.',
+    default: 'Oops, you\'ve no right to access this page.',
   },
 })
 </script>

@@ -1,11 +1,11 @@
 <script lang="ts">
-import FlowGraph from '../../graph/index'
+import FlowGraph from '@/pages/scenario/components/Graph/index'
 import ConfigGrid from './ConfigGrid/index.vue'
 import ConfigNode from './ConfigNode/index.vue'
 import ConfigEdge from './ConfigEdge/index.vue'
-import './index.less'
+import '../../css/config.less'
 import { defineComponent, provide, ref } from 'vue'
-import { globalGridAttr } from '../../models/global'
+import { globalGridAttr } from '../../class/global'
 
 export default defineComponent({
   name: 'Index',

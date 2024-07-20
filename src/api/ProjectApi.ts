@@ -17,6 +17,13 @@ export const getAllProject = (page: number, pageSize: number) => {
     return instance.get(`${projectApi}/project/getAll?page=${page}&pageSize=${pageSize}`)
 }
 
+export const getAllMyOwnProject = (page: number, pageSize: number) => {
+  if (page === undefined || pageSize === undefined)
+    return instance.get(`${projectApi}/project/getAllMyOwn`)
+  else
+    return instance.get(`${projectApi}/project/getAllMyOwn?page=${page}&pageSize=${pageSize}`)
+}
+
 export const getProjectById = (id: number) => {
   return instance.get(`${projectApi}/project/getById?id=${id}`)
 }

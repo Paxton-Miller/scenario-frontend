@@ -1,8 +1,16 @@
+<!--
+  @name: [...accessDenied]
+  @description: TODO
+  @author: Lingkai Shi
+  @date: 7/20/2024 10:36 PM
+  @version: 1.0
+-->
+
 <script setup lang="ts">
 const props = defineProps({
   content: {
     type: String,
-    default: 'Oops, the page you\'re looking for doesn\'t exist.',
+    default: 'Oops, no data to show',
   },
 })
 </script>
@@ -18,17 +26,6 @@ const props = defineProps({
       src="../../assets/images/collaboration.jpg"
       class="invite-img"
     ><br>
-    <RouterLink to="/admin/project">
-      <ElButton
-        size="large"
-        plain
-        class="join-button"
-      >
-        <span style="font-size: larger;font-family: Consolas">
-          Back to Home
-        </span>
-      </ElButton>
-    </RouterLink>
   </div>
 </template>
 
@@ -39,7 +36,7 @@ $dark: #000;
 $cursor: #fff;
 
 .invite-container {
-  min-height: 100vh;
+  min-height: 70vh;
   width: 100%;
   background-color: $bg;
   overflow: hidden;
@@ -52,11 +49,6 @@ $cursor: #fff;
     padding: 40px 25px 0;
     margin: auto auto;
     overflow: hidden;
-  }
-
-  .join-button {
-    width: 20%;
-    box-sizing: border-box;
   }
 
   .tips {

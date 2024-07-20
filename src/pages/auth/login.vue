@@ -4,15 +4,19 @@ import { ref } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
 import { ElMessage } from 'element-plus'
 import { Lock, User } from '@element-plus/icons-vue'
-import { login } from '@/api/UserApi'
+import { getUserById, login } from '@/api/UserApi'
 import type { LoginForm } from '@/pages/auth/class/Login'
-import TokenTool from '@/utils/class/TokenTool'
+import TokenTool from '@/utils/TokenTool'
 import type { LoginResponse, SessionWebUser } from '@/api/class/User'
 
 const form = ref<LoginForm>({
   email: '',
   password: '',
 })
+
+const route = useRoute()
+const title = ref<string>('Geographic Conceptual Scenario-based Cognitive Collaboration Construction System')
+const type = ref<string>('normal')
 
 const formRef = ref<FormInstance>()
 
@@ -41,16 +45,30 @@ const submit = async (formValidator: FormInstance | undefined) => {
         const toolObj = new TokenTool()
         const sessionWebUser: SessionWebUser = JSON.parse(toolObj.FormatToken(localStorage.token))
 
+        const user = await getUserById(sessionWebUser.id) as unknown as any
+
+        localStorage.name = user.name
+        localStorage.avatar = user.avatar
         localStorage.expDate = toolObj.FormatDate(sessionWebUser.exp)
         localStorage.id = sessionWebUser.id
         localStorage.email = sessionWebUser.email
         localStorage.type = sessionWebUser.type ? 'userApi' : 'admin'
         ElMessage.success('You\'re signed in')
-        router.push('/admin/project')
+        if (type.value === 'invite')
+          router.push(route.query.redirect as string)
+        else
+          router.push('/admin/project')
       }
     }
   })
 }
+
+onMounted(() => {
+  if (route.query.redirect !== undefined)
+    type.value = 'invite'
+  if (type.value === 'invite')
+    title.value = 'Sign in to join the collaboration'
+})
 </script>
 
 <template>
@@ -63,7 +81,7 @@ const submit = async (formValidator: FormInstance | undefined) => {
     >
       <div class="title-container">
         <h3 class="title">
-          Geographic Conceptual Scenario-based Cognitive Collaboration Construction System
+          {{ title }}
         </h3>
       </div>
       <ElFormItem prop="email">
@@ -158,7 +176,7 @@ $cursor: #fff;
     .title {
       font-size: 26px;
       color: $light_gray;
-      margin: 0px auto 40px auto;
+      margin: 0px auto auto 40px;
       text-align: center;
       font-weight: bold;
     }

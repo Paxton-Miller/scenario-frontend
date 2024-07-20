@@ -1,4 +1,4 @@
-import { reactive } from 'vue';
+import { reactive } from 'vue'
 
 export const globalGridAttr = reactive({
   type: 'mesh',
@@ -27,4 +27,4 @@ export const globalGridAttr = reactive({
   nodeFontSize: 12,
   nodeColor: '#080808',
   nodeUsers: '',
-});
+})

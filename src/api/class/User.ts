@@ -1,3 +1,6 @@
+import type { PageResponse } from '@/api/class/Common'
+import { Room } from '@/api/class/Room'
+
 /**
  * @name: Login
  * @description: TODO
@@ -49,4 +52,8 @@ export interface SessionWebUser {
   type: number
   token: string
   exp: number
+}
+
+export interface GetAllUserResponse extends PageResponse {
+  list: []
 }

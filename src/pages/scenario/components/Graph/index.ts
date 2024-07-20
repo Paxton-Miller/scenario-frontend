@@ -7,6 +7,7 @@ import { Selection } from '@antv/x6-plugin-selection'
 import { Keyboard } from '@antv/x6-plugin-keyboard'
 import { History } from '@antv/x6-plugin-history'
 import { Transform } from '@antv/x6-plugin-transform'
+import { Export } from '@antv/x6-plugin-export'
 import { DeleteFilled, Refresh } from '@element-plus/icons-vue'
 import { ref } from 'vue'
 import { ElMessageBox } from 'element-plus'
@@ -85,11 +86,11 @@ export default class FlowGraph {
         type: 'doubleMesh',
         args: [
           {
-            color: '#cccccc',
+            color: '#eee',
             thickness: 1,
           },
           {
-            color: '#5F95FF',
+            color: '#ddd',
             thickness: 1,
             factor: 4,
           },
@@ -99,7 +100,7 @@ export default class FlowGraph {
         enabled: true,
         modifiers: ['ctrl', 'meta'],
         minScale: 0.5,
-        maxScale: 2,
+        maxScale: 5,
       },
       panning: {
         enabled: true,
@@ -125,6 +126,7 @@ export default class FlowGraph {
             router: {
               name: 'manhattan',
             },
+            zIndex: 0, // Attention! Do set the zIndex of edge as 0 so that the port of the node will be available to link multiple nodes.
           })
         },
         validateConnection({ sourceView, targetView, sourceMagnet, targetMagnet }) {
@@ -208,6 +210,8 @@ export default class FlowGraph {
         },
       }),
     )
+
+    this.graph.use(new Export())
 
     // use hot keys
     this.graph.use(

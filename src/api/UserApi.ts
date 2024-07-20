@@ -28,6 +28,10 @@ export const getUserById = (id: number) => {
   return instance.get(`${userApi}/user/getById?id=${id}`)
 }
 
+export const getUserByIds = (idList: number[], page: number, pageSize: number) => {
+  return instance.get(`${userApi}/user/getByIds?idList=${idList}&page=${page}&pageSize=${pageSize}`)
+}
+
 export const getAllUser = (page: number, pageSize: number) => {
   if (page === undefined || pageSize === undefined)
     return instance.get(`${userApi}/user/getAll`)

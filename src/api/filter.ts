@@ -16,55 +16,55 @@ const instance = axios.create({
 })
 
 // http 拦截器
-instance.interceptors.request.use(
-  (config: any) => {
-    const token = localStorage.getItem('token')
-    if (token)
-      config.headers.Authorization = token
 
-    return config
-  },
-  (error: any) => {
-    return Promise.reject(error)
-  },
-)
+const reqOnFulfilled = (config: any) => {
+  const token = localStorage.getItem('token')
+  if (token)
+    config.headers.Authorization = token
 
-instance.interceptors.response.use(
-  (response: any) => {
-    const { data: res } = response
+  return config
+}
 
-    // 拦截请求，统一相应
-    if (res.code === 200) {
-      return res.data === null ? true : res.data
-    }
-    else {
-      ElMessage.warning(res.message)
+const reqOnRejected = (error: any) => {
+  return Promise.reject(error)
+}
 
-      return res.data
+instance.interceptors.request.use(reqOnFulfilled, reqOnRejected)
+
+const resOnFulfilled = (response: any) => {
+  const { data: res } = response
+
+  // 拦截请求，统一相应
+  if (res.code === 200) {
+    return res.data === null ? true : res.data
+  }
+  else {
+    ElMessage.warning(res.message)
+
+    return res.data
+  }
+}
+
+const resOnRejected = (error: any) => {
+  if (error.response) {
+    switch (error.response.status) {
+      case 401:
+        ElMessage.warning('Access Denied!')
+        break
+      case 404:
+        ElMessage.warning('The interface does not exist, do check the interface address.')
+        break
+      case 500:
+        ElMessage.warning('Internal server error, please contact with the administrator.')
+        break
+      default:
+        return Promise.reject(error.response.data) // 返回接口返回的错误信息
     }
   }
-  ,
+  else {
+    ElMessage.error('CORS Block')
+  }
+}
 
-  // error也可以处理
-  (error: any) => {
-    if (error.response) {
-      switch (error.response.status) {
-        case 401:
-          ElMessage.warning('Access Denied!')
-          break
-        case 404:
-          ElMessage.warning('The interface does not exist, do check the interface address.')
-          break
-        case 500:
-          ElMessage.warning('Internal server error, please contact with the administrator.')
-          break
-        default:
-          return Promise.reject(error.response.data) // 返回接口返回的错误信息
-      }
-    }
-    else {
-      ElMessage.error('CORS Block')
-    }
-  },
-)
+instance.interceptors.response.use(resOnFulfilled, resOnRejected)
 export default instance

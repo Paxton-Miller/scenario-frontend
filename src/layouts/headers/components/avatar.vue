@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import { useStore } from 'vuex'
 import { logout } from '@/api/UserApi'
-import TokenTool from '@/utils/class/TokenTool'
+import TokenTool from '@/utils/TokenTool'
 
 const store = useStore()
 
@@ -20,6 +20,12 @@ const handleLogout = async () => {
     router.push({ path: '/login' })
   }
 }
+
+onMounted(() => {
+  const avatarUri = localStorage.getItem('avatar')
+  if (avatarUri !== undefined)
+    squareUrl.value = avatarUri
+})
 </script>
 
 <template>

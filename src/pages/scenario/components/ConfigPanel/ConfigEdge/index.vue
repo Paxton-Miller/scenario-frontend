@@ -38,7 +38,7 @@
 </template>
 
 <script lang="ts">
-  import FlowGraph from '../../../graph/index';
+  import FlowGraph from '@/pages/scenario/components/Graph/index';
   import { Edge } from '@antv/x6';
   import { defineComponent, inject, watch } from 'vue';
 

@@ -42,6 +42,8 @@ class TokenTool {
 
   ClearLocalStorage() {
     localStorage.setItem('id', '')
+    localStorage.setItem('name', '')
+    localStorage.setItem('avatar', '')
     localStorage.setItem('token', '')
     localStorage.setItem('type', '')
     localStorage.setItem('email', '')
