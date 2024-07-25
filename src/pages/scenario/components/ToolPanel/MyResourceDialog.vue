@@ -11,7 +11,7 @@ import { onMounted } from 'vue'
 import { Graph } from '@antv/x6'
 import { v4 as uuidv4 } from 'uuid'
 import { addResource, uploadResource } from '@/api/ResourceApi'
-import ResourceList from '@/pages/scenario/components/ResourceList.vue'
+import ResourceList from '@/pages/scenario/components/ToolPanel/ResourceList.vue'
 
 defineProps({
   dialog: {
@@ -24,8 +24,8 @@ defineProps({
   },
 })
 
-const listRef = ref()
 const emits = defineEmits(['closeAdd'])
+const listRef = ref()
 
 const handleChange = async (file: File) => {
   if (file.size / 1024 > 200) {

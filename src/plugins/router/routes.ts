@@ -31,7 +31,7 @@ export const routes = [
   {
     name: 'Invite',
     path: '/invite',
-    component: () => import('@/pages/invite/invite.vue'),
+    component: () => import('@/pages/invite-collaboration/invite.vue'),
     meta: { requiresAuth: true, role: 'admin' },
   },
   {
@@ -43,17 +43,22 @@ export const routes = [
       {
         name: 'Project',
         path: 'project',
-        component: () => import('@/pages/project/project.vue'),
+        component: () => import('@/pages/project/components/Graph.vue'),
       },
       {
         name: 'ProjectDetail',
         path: 'project/detail',
-        component: () => import('@/pages/project/projectDetail.vue'),
+        component: () => import('@/pages/project/project.vue'),
       },
       {
         name: 'Scenario',
         path: 'scenario',
         component: () => import('@/pages/scenario/scenario.vue'),
+      },
+      {
+        name: 'Collaboration',
+        path: 'collaboration',
+        component: () => import('@/pages/invite-collaboration/collaboration.vue'),
       },
 
       /* { // UUID型

@@ -20,8 +20,6 @@ import { Transform } from '@antv/x6-plugin-transform'
 import { ElMessageBox } from 'element-plus'
 import { useContextMenuStore } from '@/store/contextMenu'
 
-import type { Project } from '@/api/class/Project'
-import { getProjectById } from '@/api/ProjectApi'
 import { ContextMenuTool } from '@/pages/common/components/ContextMenuTool'
 import AddConnectorDialog from '@/pages/project/components/AddConnectorDialog.vue'
 import type { AddConnectorForm } from '@/pages/project/class/Project'
@@ -38,10 +36,15 @@ import {
 } from '@/api/ScenarioRelationApi'
 import type { Scenario } from '@/api/class/Scenario'
 import type { ScenarioRelation } from '@/api/class/ScenarioRelation'
+import { getRoomByScenarioId } from '@/api/RoomApi'
+
+const props = defineProps({
+  project: {
+    default: {},
+  },
+})
 
 const graph = ref<Graph>()
-const route = useRoute()
-const project = ref<Project>()
 const router = useRouter()
 const store = useContextMenuStore()
 const addConnectorDialog = ref<boolean>(false)
@@ -72,8 +75,8 @@ const graphData = ref({
 })
 
 const getGraphData = async () => {
-  graphNodes.value = await getAllScenarioByProjectId(project.value?.id as number) as unknown as Scenario[]
-  graphEdges.value = await getAllScenarioRelationByProjectId(project.value?.id as number) as unknown as ScenarioRelation[]
+  graphNodes.value = await getAllScenarioByProjectId(props.project?.id as number) as unknown as Scenario[]
+  graphEdges.value = await getAllScenarioRelationByProjectId(props.project?.id as number) as unknown as ScenarioRelation[]
 
   graphEdgesWithoutId.value = graphEdges.value.map((edge: any) => {
     // remove the id property
@@ -111,13 +114,6 @@ const addNode = () => {
   })
 }
 
-const getProjectDetail = async () => {
-  // get project by id
-  const result = await getProjectById(route.query.id as unknown as number) as unknown as Project
-  if (result)
-    project.value = result
-}
-
 const registerNode = () => {
   Graph.registerNode( // set the style of node
     'custom-rect',
@@ -145,13 +141,14 @@ const registerNode = () => {
   )
 }
 
-const openNodeDetail = (node: any) => {
+const openNodeDetail = async (node: any) => {
   // eslint-disable-next-line
   if (isNaN(node.id)) {
     ElMessage.info('Please save first')
   }
   else {
-    const url = router.resolve({ name: 'Scenario', query: { id: node.id } }).href
+    const room = await getRoomByScenarioId(node.id) as any
+    const url = router.resolve({ name: 'Scenario', query: { id: node.id, roomUUID: room.uuid } }).href
 
     window.open(url, '_blank')
   }
@@ -447,7 +444,7 @@ const saveGraph = async () => {
       nodesToAdd.push({
         node: nodeValue.id,
         label: nodeValue.attrs!.text.text,
-        projectId: project.value?.id,
+        projectId: props.project?.id,
         x: (nodeValue as any).position.x,
         y: (nodeValue as any).position.y,
         width: (nodeValue as any).size.width,
@@ -461,7 +458,7 @@ const saveGraph = async () => {
         nodesToEdit.push({
           id: node.id,
           label: nodeValue.attrs!.text.text,
-          projectId: project.value?.id,
+          projectId: props.project?.id,
           x: (nodeValue as any).position.x,
           y: (nodeValue as any).position.y,
           width: (nodeValue as any).size.width,
@@ -486,7 +483,7 @@ const saveGraph = async () => {
     if (!graphEdges.value.some((edge: any) => edge.source == (edgeValue as any).source.cell && edge.target == (edgeValue as any).target.cell)) {
       edgesToAdd.push({
         label: (edgeValue as any).labels === undefined ? '' : (edgeValue as any).labels[0].attrs.label.text,
-        projectId: project.value?.id,
+        projectId: props.project?.id,
 
         // According to the sourceTag created before, if the edge is newly-created, we'll find the element in nodesAdded that uuid(node.node) === edge.source/target.cell. And if the edge already existed before, use source/target.cell instead.
         source: (edgeValue as any).sourceTag === 'new' ? nodesAdded.find(node => node.node === (edgeValue as any).source.cell)?.id : (edgeValue as any).source.cell,
@@ -500,7 +497,7 @@ const saveGraph = async () => {
         edgesToEdit.push({
           id: edge.id,
           label: (edgeValue as any).labels === undefined ? '' : (edgeValue as any).labels[0].attrs.label.text,
-          projectId: project.value?.id,
+          projectId: props.project?.id,
           source: (edgeValue as any).source.cell,
           target: (edgeValue as any).target.cell,
         })
@@ -527,8 +524,7 @@ onBeforeMount(() => {
   registerNode()
 })
 
-onMounted(async () => {
-  await getProjectDetail()
+watch(() => props.project, async val => {
   await getGraphData()
   initGraph()
 })
@@ -540,7 +536,7 @@ onMounted(async () => {
       <div style="display: flex; align-items: center; justify-content: space-between;">
         <div>
           <h3 style="display: inline-block">
-            {{ project?.name }} -- Project Detail
+            {{ props.project?.name }} -- Project Detail
           </h3>
           &nbsp;
           <ElButton

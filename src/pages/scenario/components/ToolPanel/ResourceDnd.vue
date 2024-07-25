@@ -8,8 +8,8 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import ResourceList from '@/pages/scenario/components/ResourceList.vue'
-import MyResourceDialog from '@/pages/scenario/components/MyResourceDialog.vue'
+import ResourceList from '@/pages/scenario/components/ToolPanel/ResourceList.vue'
+import MyResourceDialog from '@/pages/scenario/components/ToolPanel/MyResourceDialog.vue'
 
 const myResourceDialog = ref<boolean>(false)
 const activeName = ref('1')

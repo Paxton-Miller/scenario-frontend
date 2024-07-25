@@ -1,4 +1,5 @@
 import type { BaseEntity, PageResponse } from '@/api/class/Common'
+import { Project } from '@/api/class/Project'
 
 /**
  * @name: Scenario
@@ -17,4 +18,15 @@ export interface Scenario extends BaseEntity {
   node: string
   type: boolean
   isEnable: boolean
+}
+
+export interface ScenarioWithProject extends BaseEntity {
+  name: string
+  projectName: string
+  projectId: number
+  roomUUID: string
+}
+
+export interface GetScenarioWithProjectResponse extends PageResponse {
+  list: ScenarioWithProject[]
 }

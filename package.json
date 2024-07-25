@@ -31,6 +31,8 @@
     "apexcharts": "3.37.0",
     "axios": "^1.6.8",
     "driver.js": "^0.9.8",
+    "echarts": "^5.5.1",
+    "echarts-wordcloud": "^2.1.0",
     "element-plus": "^2.7.1",
     "nprogress": "^0.2.0",
     "pinia": "^2.1.7",

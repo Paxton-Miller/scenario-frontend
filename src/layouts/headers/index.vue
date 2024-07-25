@@ -23,13 +23,29 @@ const props = defineProps({
 <template>
   <div class="navbar">
     <RouterLink to="/admin/project">
-      <h2 v-if="showTitle">
-        Scenario Construction System
+      <h2
+        v-if="showTitle"
+        style="font-family: 'Georgia'; font-weight: bolder; font-size: larger"
+      >
+        GeoConceptual&nbsp; Modeling&nbsp; System
       </h2>
     </RouterLink>
     <Hamburger v-if="showHamburger" />
     <Breadcrumb v-if="showBreadcrumb" />
     <div class="navbar-right">
+      <RouterLink
+        to="/admin/project"
+        style="margin-right: 20px"
+      >
+        <h3 style="font-family: 'Helvetica Neue';">
+          Project
+        </h3>
+      </RouterLink>
+      <RouterLink to="/admin/collaboration">
+        <h3 style="font-family: 'Helvetica Neue';">
+          Collaboration
+        </h3>
+      </RouterLink>
       <Driver class="navbar-itemApi" />
       <Avatar class="navbar-itemApi" />
     </div>

@@ -16,19 +16,35 @@ import ChatPanel from '@/pages/scenario/components/ChatPanel/Chat.vue'
 import ToolPanel from '@/pages/scenario/components/ToolPanel/Tool.vue'
 import AccessDenied from '@/pages/common/[...accessDenied].vue'
 import type { Scenario } from '@/api/class/Scenario'
-import { getScenarioById, getScenarioGraphJsonById } from '@/api/ScenarioApi'
+import { getScenarioById, getScenarioGraphJsonByIdAndType } from '@/api/ScenarioApi'
 import '@/pages/scenario/css/reset/reset.less'
 import '@/pages/scenario/css/reset/global.css'
 import './css/index.less'
 import 'splitpanes/dist/splitpanes.css'
 import { getRoomByScenarioId } from '@/api/RoomApi'
 import type { Room } from '@/api/class/Room'
+import { initWebSocket, onClose, sendMessagePing } from '@/pages/scenario/components/Collaborate'
+import { useDimensionStore } from '@/store/dimension'
+
+// const ws = ref(null)
 
 const route = useRoute()
 const scenario = ref<Scenario>()
-const graph = ref<Graph>()
+// const graph = ref<Graph>()
 const room = ref<Room>()
 const isAlreadyACollaborator = ref<boolean>(true)
+const isReady = ref(false)
+const toolBarRef = ref()
+const chatRef = ref()
+const store = useDimensionStore()
+const isFirstTime = ref<boolean>(true)
+const drawer = ref<boolean>(false)
+
+const getRoom = async () => {
+  const result = await getRoomByScenarioId(scenario.value?.id as number) as unknown as Room
+  if (result)
+    room.value = result
+}
 
 const checkIdentity = async () => {
   // Check if the user is the collaborator of the scenario?
@@ -48,24 +64,25 @@ const getContainerSize = () => {
   }
 }
 
-const isReady = ref(false)
-
 const initGraph = async () => {
-  const data = await getScenarioGraphJsonById(route.query.id as unknown as number)
+  const data = await getScenarioGraphJsonByIdAndType(route.query.id as unknown as number, toolBarRef.value.dimension)
   if (data) {
-    graph.value = FlowGraph.init(data)
+    // graph.value = FlowGraph.init(data)
+    FlowGraph.graph = FlowGraph.init(data)
   } else {
-    graph.value = FlowGraph.init({
+    // graph.value = FlowGraph.init({
+    //   cells: [],
+    // })
+    FlowGraph.graph = FlowGraph.init({
       cells: [],
     })
   }
 
-  isReady.value = true
-
   const resizeFn = () => {
     const { width, height } = getContainerSize()
 
-    graph.value?.resize(width, height)
+    // graph.value?.resize(width, height)
+    FlowGraph.graph.resize(width, height)
   }
 
   resizeFn()
@@ -82,14 +99,45 @@ const getScenarioDetail = async () => {
 
 onMounted(async () => {
   await checkIdentity()
-  initGraph()
-  await getScenarioDetail()
-  console.log(scenario.value)
+  if (isAlreadyACollaborator.value) {
+    await getScenarioDetail()
+    await getRoom()
+    store.roomUUID = room.value?.uuid
+    isReady.value = true
+    await initGraph()
+    isFirstTime.value = false
+    initWebSocket(room.value?.uuid as string, 'time')
+    setInterval(() => {
+      // heartbeats 60s per time
+      sendMessagePing()
+    }, 1000 * 60)
+    store.scenarioId = <number>scenario.value?.id
+  }
+})
+
+onBeforeUnmount(() => {
+  onClose()
+})
+watch(() => toolBarRef.value?.dimension, async val => {
+  store.type = 'time'
+  if (!isFirstTime.value) {
+    store.type = val
+    // do reset the graph when changing the dimension
+    // tips: removeCells/clearCells didn't work
+    const container = document.getElementById('container')
+    if (container)
+      container.innerHTML = ''
+
+    await initGraph()
+
+    initWebSocket(route.query.roomUUID as string, val)
+  }
 })
 </script>
 
 <template>
-  <!-- 最上方一栏ElHeader -->
+
+  <!-- Header -->
   <div
     v-if="isAlreadyACollaborator"
     style="display: flex; align-items: center; justify-content: space-between;"
@@ -101,7 +149,10 @@ onMounted(async () => {
     </div>
     <!-- 流程图工具栏 -->
     <div class="toolbar">
-      <ToolBar v-if="true" />
+      <ToolBar
+        v-if="true"
+        ref="toolBarRef"
+      />
     </div>
   </div>
   <AccessDenied v-if="!isAlreadyACollaborator" />
@@ -110,26 +161,31 @@ onMounted(async () => {
     class="wrap"
   >
     <div class="content">
-      <!-- 左侧图形库Stencil -->
+      <!-- Left Stencil -->
       <div
         id="stencil"
         class="sider"
       />
       <div class="panel">
-        <!-- 流程图画板 -->
+        <!-- FlowGraph Panel -->
         <div
           id="container"
           class="x6-graph"
         />
       </div>
-      <!-- 右侧工具栏 -->
+      <!-- Right ToolPanel -->
       <div class="config">
         <Splitpanes horizontal>
           <Pane
             min-size="20"
             max-size="70"
           >
-            <ChatPanel />
+            <ChatPanel
+              v-if="isReady"
+              ref="chatRef"
+              :scenario-id="scenario?.id"
+              :room="room"
+            />
           </Pane>
           <Pane
             min-size="20"

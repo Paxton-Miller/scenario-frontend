@@ -20,7 +20,7 @@ const asideWidth = computed(() => {
       class="sidebar-container"
     >
       <div style="color: white;font-size: larger;font-family: 微软雅黑;font-weight: bold">
-        Scenario Construction
+        GeoConceptual Modeling
       </div>
       <Menu />
     </ElAside>

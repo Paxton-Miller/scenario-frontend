@@ -67,7 +67,7 @@ const submit = async (formValidator: FormInstance | undefined) => {
     >
       <div class="title-container">
         <h3 class="title">
-          Geographic Conceptual Scenario-based Cognitive Collaboration Construction System
+          Scenario-Based Collaborative Geographic Conceptual Modeling System
         </h3>
       </div>
       <ElFormItem prop="name">

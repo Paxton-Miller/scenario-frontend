@@ -137,6 +137,7 @@ onMounted(async () => {
       style="margin-right: 15px;margin-left: -5px"
       type="flex"
     >
+      <span v-if="tableData.length === 0">&nbsp;No Data</span>
       <ElCol
         v-for="(item, index) in tableData"
         :key="index"

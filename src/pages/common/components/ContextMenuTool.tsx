@@ -57,7 +57,7 @@ class ContextMenuTool extends ToolsView.ToolItem {
 
   onContextMenu({ e, x, y, cell, view }: any) {
     // eslint-disable-next-line no-restricted-syntax
-    debugger
+    // debugger
     if (timer) {
       clearTimeout(timer)
       timer = 0

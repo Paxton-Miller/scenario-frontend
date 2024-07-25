@@ -6,7 +6,7 @@ import './css/index.less'
 import type { Graph } from '@antv/x6'
 import { Pane, Splitpanes } from 'splitpanes'
 import FlowGraph from './components/Graph'
-import { getScenarioGraphJsonById, saveScenarioGraphJsonById } from '@/api/ScenarioApi'
+import { getScenarioGraphJsonByIdAndType, saveScenarioGraphJsonByIdAndType } from '@/api/ScenarioApi'
 import 'splitpanes/dist/splitpanes.css'
 
 const route = useRoute()
@@ -23,12 +23,12 @@ const getContainerSize = () => {
 const isReady = ref(false)
 
 const saveGraph = async () => {
-  await saveScenarioGraphJsonById(route.query.id as unknown as number, graph.value?.toJSON())
+  await saveScenarioGraphJsonByIdAndType(route.query.id as unknown as number, dimension.value, graph.value?.toJSON())
   ElMessage.success('Done')
 }
 
 const initGraph = async () => {
-  const data = await getScenarioGraphJsonById(route.query.id as unknown as number)
+  const data = await getScenarioGraphJsonByIdAndType(route.query.id as unknown as number, dimension.value)
   if (data) {
     graph.value = FlowGraph.init(data)
   } else {

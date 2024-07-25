@@ -17,12 +17,12 @@ export const getAllScenario = () => {
   return instance.get(`${scenarioApi}/scenario/getAll`)
 }
 
-export const saveScenarioGraphJsonById = (id: number, json: any) => {
-  return instance.post(`${scenarioApi}/scenario/saveGraphJsonById?id=${id}`, json)
+export const saveScenarioGraphJsonByIdAndType = (id: number, type: string, json: any) => {
+  return instance.post(`${scenarioApi}/scenario/saveGraphJsonByIdAndType?id=${id}&type=${type}`, json)
 }
 
-export const getScenarioGraphJsonById = (id: number) => {
-  return instance.get(`${scenarioApi}/scenario/getGraphJsonById?id=${id}`)
+export const getScenarioGraphJsonByIdAndType = (id: number, type: string) => {
+  return instance.get(`${scenarioApi}/scenario/getGraphJsonByIdAndType?id=${id}&type=${type}`)
 }
 
 export const getAllScenarioByProjectId = (id: number) => {

@@ -10,7 +10,9 @@
 import { ref } from 'vue'
 import type { TabsPaneContext } from 'element-plus'
 
-import ResourceDnd from '@/pages/scenario/components/ResourceDnd.vue'
+import ResourceDnd from '@/pages/scenario/components/ToolPanel/ResourceDnd.vue'
+import WordCloud from '@/pages/scenario/components/ToolPanel/WordCloud.vue'
+import Property from '@/pages/scenario/components/ToolPanel/Property.vue'
 
 const activeName = ref('first')
 
@@ -25,23 +27,23 @@ const handleClick = (tab: TabsPaneContext, event: Event) => {
     class="demo-tabs"
     @tab-click="handleClick"
   >
-    <ElTabPane
-      label="WordCloud"
-      name="first"
-    >
-      WordCloud
+    <ElTabPane name="first">
+      <template #label>
+        <span style="font-size: smaller">Property</span>
+      </template>
+      <Property />
     </ElTabPane>
-    <ElTabPane
-      label="Map"
-      name="second"
-    >
+    <ElTabPane name="second">
+      <template #label>
+        <span style="font-size: smaller">WordCloud</span>
+      </template>
+      <WordCloud />
+    </ElTabPane>
+    <ElTabPane name="third">
+      <template #label>
+        <span style="font-size: smaller">Map&Chart</span>
+      </template>
       <ResourceDnd />
-    </ElTabPane>
-    <ElTabPane
-      label="Chart"
-      name="third"
-    >
-      Chart
     </ElTabPane>
   </ElTabs>
 </template>

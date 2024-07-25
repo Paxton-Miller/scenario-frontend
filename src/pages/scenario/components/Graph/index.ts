@@ -13,12 +13,18 @@ import { ref } from 'vue'
 import { ElMessageBox } from 'element-plus'
 import { ContextMenuTool } from '@/pages/common/components/ContextMenuTool'
 import { useContextMenuStore } from '@/store/contextMenu'
+import { sendMsg } from '@/pages/scenario/components/Collaborate'
+import { saveScenarioGraphJsonByIdAndType } from '@/api/ScenarioApi'
+import { useDimensionStore } from '@/store/dimension'
+import { useCellPropertyStore } from '@/store/cellProperty'
 
 const history = new History({
   enabled: true,
 })
 
 const store = useContextMenuStore()
+const cellPropertyStore = useCellPropertyStore()
+const dimensionStore = useDimensionStore()
 const canUndo = ref(true)
 const canRedo = ref(false)
 
@@ -50,6 +56,14 @@ const renameCell = () => {
         message: 'Rename canceled',
       })
     })
+}
+
+export const saveGraph = async () => {
+  const { graph } = FlowGraph
+
+  const result = await saveScenarioGraphJsonByIdAndType(dimensionStore.scenarioId, dimensionStore.type as string, graph.toJSON())
+  if (!result)
+    ElMessage.warning('Auto save failed')
 }
 
 const menuTool = {
@@ -164,6 +178,7 @@ export default class FlowGraph {
         },
       },
     })
+    this.graph?.clearCells()
     this.initAddon()
     this.initStencil()
     this.initShape()
@@ -316,6 +331,9 @@ export default class FlowGraph {
           text: 'Start',
         },
       },
+      data: {
+        semantic: '',
+      },
     })
 
     const r2 = graph.createNode({
@@ -324,6 +342,9 @@ export default class FlowGraph {
         text: {
           text: 'Process',
         },
+      },
+      data: {
+        semantic: '',
       },
     })
 
@@ -379,6 +400,9 @@ export default class FlowGraph {
           },
         },
       },
+      data: {
+        semantic: '',
+      },
     })
 
     const r4 = graph.createNode({
@@ -394,18 +418,30 @@ export default class FlowGraph {
           text: 'Junction',
         },
       },
+      data: {
+        semantic: '',
+      },
     })
 
     const c1 = graph.createNode({
       shape: 'flow-chart-image-rect',
+      data: {
+        semantic: '',
+      },
     })
 
     const c2 = graph.createNode({
       shape: 'flow-chart-title-rect',
+      data: {
+        semantic: '',
+      },
     })
 
     const c3 = graph.createNode({
       shape: 'flow-chart-animate-text',
+      data: {
+        semantic: '',
+      },
     })
 
     const g1 = graph.createNode({
@@ -417,6 +453,7 @@ export default class FlowGraph {
       },
       data: {
         parent: true,
+        semantic: '',
       },
     })
 
@@ -487,6 +524,83 @@ export default class FlowGraph {
     graph.on('history:change', () => {
       canUndo.value = history.canUndo()
       canRedo.value = history.canRedo()
+    })
+
+    // For flow-image-rect, do resize the image while resizing the bounding box
+    graph.on('node:resizing', ({ node }) => {
+      if (node.shape === 'flow-image-rect') {
+        console.log(node.getSize())
+        node.setAttrs({
+          image: {
+            width: node.getSize().width,
+            height: node.getSize().height,
+          },
+        }, {
+          silent: true,
+        })
+      }
+    })
+
+    // For Collaboration, give user a hint when someone is making changes on the graph
+    graph.on('node:added', ({ node }) => {
+      // sendMsg(JSON.stringify(graph.toJSON()))
+      sendMsg(JSON.stringify({
+        event: 'node:added',
+        data: node,
+      }))
+      saveGraph()
+    })
+    graph.on('edge:connected', ({ edge }) => {
+      // sendMsg(JSON.stringify(graph.toJSON()))
+      sendMsg(JSON.stringify({
+        event: 'edge:connected',
+        data: edge,
+      }))
+      saveGraph()
+    })
+    graph.on('cell:removed', ({ cell }) => {
+      // sendMsg(JSON.stringify(graph.toJSON()))
+      sendMsg(JSON.stringify({
+        event: 'cell:removed',
+        data: cell.id,
+      }))
+      saveGraph()
+    })
+    graph.on('cell:change:attrs', ({ cell }) => {
+      // sendMsg(JSON.stringify(graph.toJSON()))
+      sendMsg(JSON.stringify({
+        event: 'cell:change:attrs',
+        data: cell,
+      }))
+      saveGraph()
+    })
+    graph.on('cell:change:labels', ({ cell }) => {
+      sendMsg(JSON.stringify({
+        event: 'cell:change:labels',
+        data: cell,
+      }))
+      saveGraph()
+    })
+    graph.on('node:resized', ({ node }) => {
+      sendMsg(JSON.stringify({
+        event: 'node:resized',
+        data: node,
+      }))
+      saveGraph()
+    })
+    graph.on('node:moved', ({ node }) => {
+      sendMsg(JSON.stringify({
+        event: 'node:moved',
+        data: node,
+      }))
+      saveGraph()
+    })
+    graph.on('node:click', ({ e, x, y, cell, view }) => {
+      Object.assign(cellPropertyStore, { e, x, y, cell, view })
+    })
+    graph.on('blank:click', () => {
+      cellPropertyStore.e = cellPropertyStore.x = cellPropertyStore.y
+        = cellPropertyStore.cell = cellPropertyStore.view = null as any
     })
   }
 }

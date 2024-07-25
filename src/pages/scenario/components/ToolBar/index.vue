@@ -2,13 +2,22 @@
 import { DataUri } from '@antv/x6'
 import { ref } from 'vue'
 import FlowGraph from '../Graph'
-import { saveScenarioGraphJsonById } from '@/api/ScenarioApi'
+import { saveScenarioGraphJsonByIdAndType } from '@/api/ScenarioApi'
 import type { ElementOption } from '@/pages/common/class/ElOption'
-import LinkDialog from '@/pages/invite/components/LinkDialog.vue'
+import LinkDialog from '@/pages/invite-collaboration/components/LinkDialog.vue'
+import { useOnlineEditorStore } from '@/store/onlineEditor'
+import { getUserById } from '@/api/UserApi'
 
 const route = useRoute()
 const linkDialog = ref<boolean>(false)
 const dimension = ref<string>('time')
+const store = useOnlineEditorStore()
+const user = ref()
+const isTimeout = ref<boolean>(true)
+
+defineExpose({
+  dimension,
+})
 
 const dimensions = ref<ElementOption[]>([
   {
@@ -56,7 +65,7 @@ const zoomToFit = () => {
 const saveGraph = async () => {
   const { graph } = FlowGraph
 
-  await saveScenarioGraphJsonById(route.query.id as unknown as number, graph?.toJSON())
+  await saveScenarioGraphJsonByIdAndType(route.query.id as unknown as number, dimension.value, graph?.toJSON())
   ElMessage.success('Done')
 }
 
@@ -123,10 +132,43 @@ const handleCommand = (command: string | number | object) => {
 const handleCloseAdd = () => {
   linkDialog.value = false
 }
+
+watch(() => store.isEditing, async val => {
+  if (val === undefined || val === null || val === false)
+    return
+  const result = await getUserById(store.userId as unknown as number)
+  if (result) {
+    user.value = result
+    isTimeout.value = false
+    store.isEditing = false
+    setTimeout(() => {
+      isTimeout.value = true
+    }, 5000)
+  }
+})
 </script>
 
 <template>
   <div class="bar">
+    <ElAlert
+      v-if="!isTimeout"
+      type="success"
+      :closable="false"
+      style="height: 30px;"
+    >
+      <template #title>
+        <span
+          class="el-avatar el-avatar--circle"
+          style="height: 20px; width: 20px; line-height: 20px; margin-top: 3px"
+        >
+          <img
+            :src="user?.avatar"
+            style="object-fit: cover;"
+          >
+        </span>
+        is editing
+      </template>
+    </ElAlert>
     <ElSelect
       v-model="dimension"
       style="min-width:170px; margin: 5px"
@@ -139,6 +181,7 @@ const handleCloseAdd = () => {
         :value="item.value"
       />
     </ElSelect>
+
     <ElTooltip
       placement="bottom"
       content="zoom in"

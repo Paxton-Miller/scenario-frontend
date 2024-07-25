@@ -10,8 +10,22 @@
 import { ref } from 'vue'
 import type { TabsPaneContext } from 'element-plus'
 import { getUserById } from '@/api/UserApi'
+import CollaboratorTable from '@/pages/invite-collaboration/components/CollaboratorTable.vue'
+import { useDimensionStore } from '@/store/dimension'
 
-const ws = ref(new WebSocket(`ws://localhost:8898/chatWs?token=${localStorage.getItem('token').substring(7)}`))
+const props = defineProps({
+  scenarioId: {
+    default: 1,
+    type: Number,
+  },
+  room: {
+    default: {},
+  },
+})
+
+const store = useDimensionStore()
+
+const ws = ref(new WebSocket(`ws://localhost:8898/chatWs/${store.roomUUID}?token=${localStorage.getItem('token').substring(7)}`))
 const imgRef = ref()
 const popoverRef = ref()
 
@@ -36,12 +50,11 @@ const createContent = (nowUser: boolean, remote: boolean, text: string) => {
       + '  </div>\n'
       + '  <div class="el-col el-col-2">\n'
       + '  <span class="el-avatar el-avatar--circle" style="height: 20px; width: 20px; line-height: 20px;">\n'
-      + `    <img src="${localStorage.getItem('avatar')}" ref="${imgRef}" v-click-outside="${onClickOutside}" style="object-fit: cover;">\n`
+      + `    <img src="${localStorage.getItem('avatar')}" ref="${imgRef.value}" v-click-outside="${onClickOutside}" style="object-fit: cover;">\n`
       + '  </span>\n'
       + '  </div>\n'
       + '</div>'
-  }
-  else if (remote) { // remoteUser表示远程用户聊天消息，蓝色的气泡
+  } else if (remote) { // remoteUser表示远程用户聊天消息，蓝色的气泡
     html = '<div class="el-row" style="padding: 5px 0">\n'
       + '  <div class="el-col el-col-2" style="text-align: right">\n'
       + '  <span class="el-avatar el-avatar--circle" style="height: 20px; width: 20px; line-height: 20px;">\n'
@@ -57,13 +70,32 @@ const createContent = (nowUser: boolean, remote: boolean, text: string) => {
   content.value += html
 }
 
+const onChatMsg = async (message: any) => {
+  chatText.value += message.data
+
+  const userId = localStorage.getItem('id')
+  const data = JSON.parse(message.data)
+  if (data.userId == userId) {
+    createContent(true, false, data.content)
+  } else {
+    remoteUser.value = await getUserById(data.userId) as unknown as any
+    createContent(false, true, data.content)
+  }
+}
+
+defineExpose({
+  onChatMsg,
+})
+
 const initWebSocket = () => {
   ws.value.onopen = () => {
     ws.value.onmessage = async message => {
+      console.log('chat websocket connected')
       chatText.value += message.data
 
       const userId = localStorage.getItem('id')
       const data = JSON.parse(message.data)
+      console.log(data)
       if (data.userId == userId) {
         createContent(true, false, data.content)
       }
@@ -111,7 +143,7 @@ const handleClick = (tab: TabsPaneContext, event: Event) => {
   console.log(tab, event)
 }
 
-onMounted(() => {
+onMounted(async () => {
   initWebSocket()
   setInterval(() => {
     // 心跳机制，60秒一次
@@ -167,7 +199,11 @@ watch(() => content.value, val => {
       label="Collaborator"
       name="second"
     >
-      Collaborator
+      <CollaboratorTable
+        :room="props.room as any"
+        :show-header="false"
+        layout="prev, next, jumper"
+      />
     </ElTabPane>
   </ElTabs>
 </template>
@@ -175,7 +211,7 @@ watch(() => content.value, val => {
 <style>
 .tip {
   color: white;
-  text-align: center;
+  text-align: left;
   border-radius: 10px;
   font-family: sans-serif;
   font-size: smaller;

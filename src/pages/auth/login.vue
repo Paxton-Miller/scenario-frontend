@@ -15,7 +15,7 @@ const form = ref<LoginForm>({
 })
 
 const route = useRoute()
-const title = ref<string>('Geographic Conceptual Scenario-based Cognitive Collaboration Construction System')
+const title = ref<string>('Scenario-Based Collaborative Geographic Conceptual Modeling System')
 const type = ref<string>('normal')
 
 const formRef = ref<FormInstance>()
@@ -67,7 +67,7 @@ onMounted(() => {
   if (route.query.redirect !== undefined)
     type.value = 'invite'
   if (type.value === 'invite')
-    title.value = 'Sign in to join the collaboration'
+    title.value = 'Sign in to access the page'
 })
 </script>
 

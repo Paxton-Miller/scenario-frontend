@@ -71,7 +71,13 @@ router.beforeEach((to, from, next) => {
     if (to.path === '/login' || to.path === '/register') {
       next()
     }
-    else if (to.path.startsWith('/invite')) {
+    // else if (to.path.startsWith('/invite')) {
+    //   next({
+    //     path: '/login',
+    //     query: { redirect: to.fullPath },
+    //   })
+    // }
+    else if (!to.path.startsWith('/login') && !to.path.startsWith('/register')) {
       next({
         path: '/login',
         query: { redirect: to.fullPath },

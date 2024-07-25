@@ -1,0 +1,236 @@
+<!--
+  @name: Property
+  @description: TODO
+  @author: Lingkai Shi
+  @date: 7/24/2024 7:57 PM
+  @version: 1.0
+-->
+
+<script setup lang="ts">
+import { useCellPropertyStore } from '@/store/cellProperty'
+import { sendMsg } from '@/pages/scenario/components/Collaborate'
+import { saveGraph } from '@/pages/scenario/components/Graph'
+
+const store = useCellPropertyStore()
+const isBlank = ref<boolean>(true)
+
+interface Description {
+  semantic: string
+}
+
+interface CustomItem {
+  label: string
+  value: string
+  isEditing: boolean
+}
+
+const name = ref<string>('')
+
+const descEg: Description = {
+  semantic: '',
+}
+
+const descForm = ref<Description>({})
+
+const customItemList = ref<CustomItem[]>([])
+
+const getName = () => {
+  if (store.view?.cell.shape === 'edge')
+    name.value = (store.view?.cell as any).getLabels()[0]?.attrs.label.text
+  else
+    name.value = (store.view?.cell as any).getLabel()
+}
+
+const setName = () => {
+  if (store.view?.cell.shape === 'edge')
+    (store.view?.cell as any).setLabels([{ attrs: { label: { text: name.value } } }])
+  else
+    (store.view?.cell as any).setLabel(name.value)
+}
+
+const disableEditing = (item: any) => {
+  if (item.label.trim() === '')
+    item.label = 'New Label'
+  item.isEditing = false
+}
+
+const getDescForm = () => {
+  const jsonData = (store.view?.cell as any).getData()
+
+  // 得到与 descForm 相同的属性键值对
+  const sameProperties = Object.keys(descEg)
+  const filteredData = {}
+  for (const [key, value] of Object.entries(jsonData)) {
+    if (sameProperties.includes(key))
+      filteredData[key] = value
+  }
+  Object.assign(descForm.value, filteredData)
+}
+
+const getCustomItemList = () => {
+  const jsonData = (store.view?.cell as any).getData()
+
+  // 得到与 descForm 相同的属性键值对
+  const sameProperties = Object.keys(descEg)
+  const filteredData = {}
+  for (const [key, value] of Object.entries(jsonData)) {
+    if (!sameProperties.includes(key))
+      filteredData[key] = value
+  }
+
+  // 将剩余的键值对转化为 { label: '', value: '' } 型的数组
+  const resultArray = Object.keys(filteredData).map(key => ({
+    label: key,
+    value: filteredData[key],
+    isEditing: false,
+  }))
+
+  customItemList.value = resultArray
+  console.log(customItemList.value)
+}
+
+const setDescFormAndCustomItemList = () => {
+  const jsonFormatted = {}
+
+  for (const item of customItemList.value) {
+    jsonFormatted[item.label] = item.value
+  }
+  (store.view?.cell as any).setData({ ...descForm.value, ...jsonFormatted }, { overwrite: true, silent: false })
+
+  // Didn't know why cell:change:data event doesn't work
+  sendMsg(JSON.stringify({
+    event: 'cell:change:data',
+    data: store.view?.cell,
+  }))
+  saveGraph()
+}
+
+const applyChanges = () => {
+  setName()
+  setDescFormAndCustomItemList()
+}
+
+const addProperty = () => {
+  let newLabel = 'Label'
+  let num = 1
+
+  while (customItemList.value.some(item => item.label === newLabel)) {
+    newLabel = 'Label'
+    newLabel += (num++)
+  }
+  customItemList.value.push({
+    label: newLabel,
+    value: '',
+    isEditing: false,
+  })
+}
+
+const deleteProperty = (index: number) => {
+  customItemList.value.splice(index, 1)
+}
+
+watch(() => store.e, val => {
+  if (val !== null) {
+    getName()
+    getDescForm()
+    getCustomItemList()
+    isBlank.value = false
+  } else {
+    isBlank.value = true
+  }
+})
+</script>
+
+<template>
+  <ElForm
+    v-if="!isBlank"
+    style="max-width: 256px"
+    label-width="auto"
+    class="demo-ruleForm"
+    size="small"
+    status-icon
+  >
+    <ElFormItem
+      label="Name"
+      prop="name"
+    >
+      <ElInput v-model="name" />
+    </ElFormItem>
+    <ElFormItem
+      label="Semantic"
+      prop="semantic"
+    >
+      <ElInput v-model="descForm.semantic" />
+    </ElFormItem>
+    <ElFormItem
+      v-for="(item, index) in customItemList"
+      :key="index"
+    >
+      <template #label>
+        <!-- dblclick to edit the label -->
+        <span
+          v-if="!item.isEditing"
+          @dblclick="item.isEditing = true"
+        >{{ item.label }}</span>
+        <ElInput
+          v-else
+          v-model="item.label"
+          style="max-width: 48px"
+          autofocus
+          maxlength="10"
+          @blur="disableEditing(item)"
+          @keyup.enter="disableEditing(item)"
+        />
+      </template>
+      <ElRow>
+        <ElCol :span="23">
+          <ElInput v-model="item.value" />
+        </ElCol>
+        <ElCol :span="1">
+          <ElTooltip content="Delete the property">
+            <ElIcon
+              style="cursor: pointer; margin: 5px"
+              @click="deleteProperty(index)"
+            >
+              <component is="close" />
+            </ElIcon>
+          </ElTooltip>
+        </ElCol>
+      </ElRow>
+    </ElFormItem>
+  </ElForm>
+  <div
+    v-if="!isBlank"
+    class="align-right"
+  >
+    <ElButton
+      size="small"
+      @click="addProperty"
+    >
+      Add Property
+    </ElButton>
+    <ElButton
+      type="primary"
+      size="small"
+      @click="applyChanges"
+    >
+      Apply
+    </ElButton>
+  </div>
+  <ElEmpty
+    v-if="isBlank"
+    content="No Data"
+    :image-size="100"
+  />
+</template>
+
+<style scoped lang="scss">
+.el-form-item {
+  margin-bottom: 5px;
+}
+
+.align-right {
+  display: flex;
+  justify-content: right;
+}
+</style>
