@@ -62,19 +62,19 @@ onMounted(() => {
   <div class="wrap">
     <div class="content">
       <Splitpanes class="default-theme" style="height: 400px">
-        <!-- 左侧工具栏 -->
+        <!-- Left Stencil -->
         <Pane
           id="stencil"
           class="sider"
         />
         <Pane class="panel">
-          <!-- 流程图画板 -->
+          <!-- FlowGraph Whiteboard -->
           <div
             id="container"
             class="x6-graph"
           />
         </Pane>
-        <!-- 右侧工具栏 -->
+        <!-- Right Panel -->
         <Pane class="config">
           <ElButton @click="saveGraph">
             Save

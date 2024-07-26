@@ -1,6 +1,6 @@
 <!--
   @name: Property
-  @description: TODO
+  @description: Property Tab Component
   @author: Lingkai Shi
   @date: 7/24/2024 7:57 PM
   @version: 1.0
@@ -12,12 +12,16 @@ import { sendMsg } from '@/pages/scenario/components/Collaborate'
 import { saveGraph } from '@/pages/scenario/components/Graph'
 
 const store = useCellPropertyStore()
+
+// Use ElEmpty component when the panel is blank
 const isBlank = ref<boolean>(true)
 
+// The interface for semantic description and other future stuff
 interface Description {
   semantic: string
 }
 
+// The interface for custom description of attribute
 interface CustomItem {
   label: string
   value: string
@@ -34,6 +38,7 @@ const descForm = ref<Description>({})
 
 const customItemList = ref<CustomItem[]>([])
 
+// get and set the name of the node
 const getName = () => {
   if (store.view?.cell.shape === 'edge')
     name.value = (store.view?.cell as any).getLabels()[0]?.attrs.label.text
@@ -48,12 +53,14 @@ const setName = () => {
     (store.view?.cell as any).setLabel(name.value)
 }
 
+// disable editing the label of the custom attribute
 const disableEditing = (item: any) => {
   if (item.label.trim() === '')
     item.label = 'New Label'
   item.isEditing = false
 }
 
+// get the description information
 const getDescForm = () => {
   const jsonData = (store.view?.cell as any).getData()
 
@@ -67,6 +74,7 @@ const getDescForm = () => {
   Object.assign(descForm.value, filteredData)
 }
 
+// get the custom attribute information
 const getCustomItemList = () => {
   const jsonData = (store.view?.cell as any).getData()
 
@@ -89,6 +97,7 @@ const getCustomItemList = () => {
   console.log(customItemList.value)
 }
 
+// set the description and the custom attribute information
 const setDescFormAndCustomItemList = () => {
   const jsonFormatted = {}
 
@@ -105,11 +114,13 @@ const setDescFormAndCustomItemList = () => {
   saveGraph()
 }
 
+// apply the changes made by user
 const applyChanges = () => {
   setName()
   setDescFormAndCustomItemList()
 }
 
+// add a custom attribute
 const addProperty = () => {
   let newLabel = 'Label'
   let num = 1
@@ -125,11 +136,13 @@ const addProperty = () => {
   })
 }
 
+// delete the custom attribute
 const deleteProperty = (index: number) => {
   customItemList.value.splice(index, 1)
 }
 
 watch(() => store.e, val => {
+  // listen to the store.e, when triggering the node:click event, refresh the property panel.
   if (val !== null) {
     getName()
     getDescForm()

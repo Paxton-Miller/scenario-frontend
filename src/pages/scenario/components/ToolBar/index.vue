@@ -74,7 +74,7 @@ const toPng = () => {
 
   graph.toPNG(
     (dataUri: string) => {
-      // 下载
+      // download
       DataUri.downloadDataUri(dataUri, '.png')
     },
     {
@@ -95,7 +95,6 @@ const toJpeg = () => {
 
   graph.toJPEG(
     (dataUri: string) => {
-      // 下载
       DataUri.downloadDataUri(dataUri, '.png')
     },
     {
@@ -115,7 +114,6 @@ const toSvg = () => {
   const { graph } = FlowGraph
 
   graph.toSVG((dataUri: string) => {
-    // 下载
     DataUri.downloadDataUri(DataUri.svgToDataUrl(dataUri), 'chart.svg')
   })
 }

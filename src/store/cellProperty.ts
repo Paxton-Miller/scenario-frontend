@@ -9,6 +9,7 @@ import type { Cell, CellView } from '@antv/x6'
  * @date: 7/24/2024 10:46 PM
  * @version: 1.0
  */
+// record the cell property when clicking the cell, use it when having to display the cell property in property tab
 export const useCellPropertyStore = defineStore('cellProperty', () => {
   // state
   const e = ref()

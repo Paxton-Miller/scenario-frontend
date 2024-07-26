@@ -114,7 +114,7 @@ const dragToGraph = (item: any, e) => {
   dnd.start(node, e)
 }
 
-// 向外暴露方法
+// expose the method
 defineExpose({
   handleSearch,
   getTableData,

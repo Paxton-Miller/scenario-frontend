@@ -27,6 +27,7 @@ defineProps({
 const emits = defineEmits(['closeAdd'])
 const listRef = ref()
 
+// when getting the local image
 const handleChange = async (file: File) => {
   if (file.size / 1024 > 200) {
     ElMessage.warning('Must be less than 200k')

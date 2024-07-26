@@ -10,7 +10,7 @@ import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import axios from 'axios'
 
-// 第一个参数是应用中 Store 的唯一 ID
+// record the header
 export const useHeaderStore = defineStore('custom', () => {
   // state
   const count = ref(0)
@@ -32,7 +32,7 @@ export const useHeaderStore = defineStore('custom', () => {
     count.value++
   }
 
-  const update = val => {
+  const update = (val: any) => {
     count.value = val.value
   }
 

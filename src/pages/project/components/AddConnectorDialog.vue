@@ -73,12 +73,12 @@ const getTargetOptions = (sourceId: number | string) => {
   }
   const edges = props.graph?.getEdges() as Edge[]
   for (let i = 0; i < edges?.length; i++) {
-    // 不能构建已有的连接器
+    // Unable to build an exist connector
     if (sourceId == (edges[i].source as any).cell)
       targetOptions.value = targetOptions.value.filter(option => option.value != (edges[i].target as any).cell)
   }
 
-  // 不能构建指向自己的连接器
+  // Unable to build a connector targeting to itself
   targetOptions.value = targetOptions.value.filter(option => option.value != form.value.source_id)
 }
 

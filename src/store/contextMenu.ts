@@ -9,7 +9,8 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import type { Cell, CellView } from '@antv/x6'
 
-// 第一个参数是应用中 Store 的唯一 ID
+// The first parameter is the unique id of the store.
+// Record the cell property when rightClick the cell(also displaying a contextmenu)
 export const useContextMenuStore = defineStore('contextMenu', () => {
   // state
   const e = ref()

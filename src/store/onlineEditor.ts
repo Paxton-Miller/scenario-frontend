@@ -8,6 +8,7 @@ import { ref } from 'vue'
  * @date: 7/25/2024 3:27 PM
  * @version: 1.0
  */
+// Record the current online editor
 export const useOnlineEditorStore = defineStore('onlineEditor', () => {
   // state
   const isEditing = ref<boolean>(false)

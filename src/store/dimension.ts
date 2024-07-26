@@ -8,6 +8,7 @@ import { ref } from 'vue'
  * @date: 7/23/2024 6:50 PM
  * @version: 1.0
  */
+// record the dimension of the scenario
 export const useDimensionStore = defineStore('dimension', () => {
   // state
   const type = ref<string>()

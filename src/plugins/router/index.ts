@@ -15,13 +15,13 @@ const toolObj = new TokenTool()
 
 const handleAuth = (to: RouteLocationNormalized, from: RouteLocationNormalized, next: NavigationGuardNext) => {
   if (to.meta.requiresAuth) {
-    // 如果目标路由有权限
+    // if the target router requires auth
     if (localStorage.type === 'user' && to.meta.role === 'user') {
-      // 普通用户
+      // normal user
       next()
     }
     else if (localStorage.type === 'admin' && to.meta.role === 'admin') {
-      // 管理员
+      // admin user
       next()
     }
     else {
@@ -29,34 +29,34 @@ const handleAuth = (to: RouteLocationNormalized, from: RouteLocationNormalized, 
     }
   }
   else {
-    // 目标路由无权限则放行
+    // let it go when the target router doesn't require auth
     next()
   }
 }
 
-// 路由导航守卫
+// before reaching the router
 router.beforeEach((to, from, next) => {
   const isAuthenticated = !toolObj.IsEmpty(localStorage.getItem('token'))
 
   NProgress.start()
-  if (isAuthenticated) { // 已登录
+  if (isAuthenticated) { // already sign in
     const expDate = localStorage.getItem('expDate') as string
     const currDate = toolObj.GetDate()
     if (to.path === '/login') {
       if (expDate >= currDate) {
         next()
       }
-      else { // 登录过期即清除本地缓存
+      else { // clear localStorage when login expired
         toolObj.ClearLocalStorage()
         next()
       }
     }
-    else { // 跳转其他路径，过期即清除本地缓存，且强制跳转登陆页面
+    else { // if reaching the router except login
       if (expDate < currDate) {
         ElMessage.warning('Login has expired, please login again')
         toolObj.ClearLocalStorage()
 
-        // 给用户以缓冲
+        // slowly open a new page
         window.setInterval(() => {
           next('/login')
         }, 1000)
@@ -66,17 +66,21 @@ router.beforeEach((to, from, next) => {
       }
     }
   }
-  else { // 未登录
-    // 增加判断以防止重定向，next('/login')表示强制跳转页面会进行重新判断，next则放行
+  else { // Not signed in
+    // avoid redirect
+    // next('/login') forces to enter the login/register page, and do the recheck, let it go when it's next().
     if (to.path === '/login' || to.path === '/register') {
       next()
     }
+
     // else if (to.path.startsWith('/invite')) {
     //   next({
     //     path: '/login',
     //     query: { redirect: to.fullPath },
     //   })
     // }
+
+    // reaching the page with redirect parameter
     else if (!to.path.startsWith('/login') && !to.path.startsWith('/register')) {
       next({
         path: '/login',
@@ -89,6 +93,7 @@ router.beforeEach((to, from, next) => {
   }
 })
 
+// the animation when loading the new page
 router.afterEach(_to => {
   NProgress.done()
 })

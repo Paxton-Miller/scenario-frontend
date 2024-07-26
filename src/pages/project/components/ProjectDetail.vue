@@ -75,9 +75,10 @@ const graphData = ref({
 })
 
 const getGraphData = async () => {
-  graphNodes.value = await getAllScenarioByProjectId(props.project?.id as number) as unknown as Scenario[]
-  graphEdges.value = await getAllScenarioRelationByProjectId(props.project?.id as number) as unknown as ScenarioRelation[]
+  graphNodes.value = await getAllScenarioByProjectId((props.project as any)?.id as number) as unknown as Scenario[]
+  graphEdges.value = await getAllScenarioRelationByProjectId((props.project as any)?.id as number) as unknown as ScenarioRelation[]
 
+  // record graphEdgesWithoutId
   graphEdgesWithoutId.value = graphEdges.value.map((edge: any) => {
     // remove the id property
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -114,6 +115,7 @@ const addNode = () => {
   })
 }
 
+// register a custom node(useless right now)
 const registerNode = () => {
   Graph.registerNode( // set the style of node
     'custom-rect',
@@ -141,6 +143,7 @@ const registerNode = () => {
   )
 }
 
+// open the scenario
 const openNodeDetail = async (node: any) => {
   // eslint-disable-next-line
   if (isNaN(node.id)) {
@@ -444,7 +447,7 @@ const saveGraph = async () => {
       nodesToAdd.push({
         node: nodeValue.id,
         label: nodeValue.attrs!.text.text,
-        projectId: props.project?.id,
+        projectId: (props.project as any)?.id,
         x: (nodeValue as any).position.x,
         y: (nodeValue as any).position.y,
         width: (nodeValue as any).size.width,
@@ -458,7 +461,7 @@ const saveGraph = async () => {
         nodesToEdit.push({
           id: node.id,
           label: nodeValue.attrs!.text.text,
-          projectId: props.project?.id,
+          projectId: (props.project as any)?.id,
           x: (nodeValue as any).position.x,
           y: (nodeValue as any).position.y,
           width: (nodeValue as any).size.width,
@@ -483,7 +486,7 @@ const saveGraph = async () => {
     if (!graphEdges.value.some((edge: any) => edge.source == (edgeValue as any).source.cell && edge.target == (edgeValue as any).target.cell)) {
       edgesToAdd.push({
         label: (edgeValue as any).labels === undefined ? '' : (edgeValue as any).labels[0].attrs.label.text,
-        projectId: props.project?.id,
+        projectId: (props.project as any)?.id,
 
         // According to the sourceTag created before, if the edge is newly-created, we'll find the element in nodesAdded that uuid(node.node) === edge.source/target.cell. And if the edge already existed before, use source/target.cell instead.
         source: (edgeValue as any).sourceTag === 'new' ? nodesAdded.find(node => node.node === (edgeValue as any).source.cell)?.id : (edgeValue as any).source.cell,
@@ -497,7 +500,7 @@ const saveGraph = async () => {
         edgesToEdit.push({
           id: edge.id,
           label: (edgeValue as any).labels === undefined ? '' : (edgeValue as any).labels[0].attrs.label.text,
-          projectId: props.project?.id,
+          projectId: (props.project as any)?.id,
           source: (edgeValue as any).source.cell,
           target: (edgeValue as any).target.cell,
         })
@@ -536,7 +539,7 @@ watch(() => props.project, async val => {
       <div style="display: flex; align-items: center; justify-content: space-between;">
         <div>
           <h3 style="display: inline-block">
-            {{ props.project?.name }} -- Project Detail
+            {{ (props.project as any)?.name }} -- Project Detail
           </h3>
           &nbsp;
           <ElButton

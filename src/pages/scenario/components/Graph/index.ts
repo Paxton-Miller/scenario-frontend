@@ -541,7 +541,7 @@ export default class FlowGraph {
       }
     })
 
-    // For Collaboration, give user a hint when someone is making changes on the graph
+    // For Collaboration, give user a hint(sendMsg) when someone is making changes(following events) on the graph
     graph.on('node:added', ({ node }) => {
       // sendMsg(JSON.stringify(graph.toJSON()))
       sendMsg(JSON.stringify({
@@ -595,9 +595,13 @@ export default class FlowGraph {
       }))
       saveGraph()
     })
+
+    // when clicking the node, record the cell property in store
     graph.on('node:click', ({ e, x, y, cell, view }) => {
       Object.assign(cellPropertyStore, { e, x, y, cell, view })
     })
+
+    // when clicking the blank, clear the cell property store
     graph.on('blank:click', () => {
       cellPropertyStore.e = cellPropertyStore.x = cellPropertyStore.y
         = cellPropertyStore.cell = cellPropertyStore.view = null as any

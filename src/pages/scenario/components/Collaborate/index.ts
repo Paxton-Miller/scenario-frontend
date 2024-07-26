@@ -27,9 +27,12 @@ export const initWebSocket = (roomUUID: string, type: string) => {
 
   (ws.value as any).onmessage = async (message: any) => {
     const data = JSON.parse(message.data)
+
+    // if the message is real content and the dimensions match.
     if (data.isMsg && store.type === data.dimension) {
       const json = JSON.parse(data.content)
 
+      // record the current editing user
       onlineEditorStore.userId = data.userId
       onlineEditorStore.isEditing = true
 
@@ -37,6 +40,7 @@ export const initWebSocket = (roomUUID: string, type: string) => {
         console.log(json)
 
         /* eslint-disable */
+        // render the message as graph content
         switch (json.event) {
           case 'node:added':
             FlowGraph.graph.addNode(json.data)
@@ -60,7 +64,7 @@ export const initWebSocket = (roomUUID: string, type: string) => {
             FlowGraph.graph.getCellById(json.data.id).setAttrs(json.data.attrs)
             break
           case 'cell:change:labels':
-            FlowGraph.graph.getCellById(json.data.id)?.setLabels(json.data?.labels)
+            (FlowGraph.graph.getCellById(json.data.id) as any)?.setLabels(json.data?.labels)
             break
           case 'cell:change:data':
             FlowGraph.graph.getCellById(json.data.id)?.setData(json.data?.data, { overwrite: true })
@@ -95,6 +99,7 @@ export const initWebSocket = (roomUUID: string, type: string) => {
   }
 }
 
+// heart beats 60s per time in case losing the websocket connection.
 export const sendMessagePing = () => {
   if (ws.value && (ws.value as any).readyState === WebSocket.OPEN)
     (ws.value as any).send('ping')

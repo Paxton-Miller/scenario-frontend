@@ -12,6 +12,8 @@ import type { TabsPaneContext } from 'element-plus'
 import { getUserById } from '@/api/UserApi'
 import CollaboratorTable from '@/pages/invite-collaboration/components/CollaboratorTable.vue'
 import { useDimensionStore } from '@/store/dimension'
+import { useEChartsStore } from '@/store/echarts'
+import { isEmpty } from '@/utils/StringTool'
 
 const props = defineProps({
   scenarioId: {
@@ -24,7 +26,9 @@ const props = defineProps({
 })
 
 const store = useDimensionStore()
+const echartsStore = useEChartsStore()
 
+// Chat WebSocket link
 const ws = ref(new WebSocket(`ws://localhost:8898/chatWs/${store.roomUUID}?token=${localStorage.getItem('token').substring(7)}`))
 const imgRef = ref()
 const popoverRef = ref()
@@ -54,7 +58,8 @@ const createContent = (nowUser: boolean, remote: boolean, text: string) => {
       + '  </span>\n'
       + '  </div>\n'
       + '</div>'
-  } else if (remote) { // remoteUser表示远程用户聊天消息，蓝色的气泡
+  }
+  else if (remote) { // remoteUser表示远程用户聊天消息，蓝色的气泡
     html = '<div class="el-row" style="padding: 5px 0">\n'
       + '  <div class="el-col el-col-2" style="text-align: right">\n'
       + '  <span class="el-avatar el-avatar--circle" style="height: 20px; width: 20px; line-height: 20px;">\n'
@@ -70,6 +75,10 @@ const createContent = (nowUser: boolean, remote: boolean, text: string) => {
   content.value += html
 }
 
+// current tab name
+const activeName = ref('first')
+
+// onChatMsg is useless right now
 const onChatMsg = async (message: any) => {
   chatText.value += message.data
 
@@ -77,7 +86,8 @@ const onChatMsg = async (message: any) => {
   const data = JSON.parse(message.data)
   if (data.userId == userId) {
     createContent(true, false, data.content)
-  } else {
+  }
+  else {
     remoteUser.value = await getUserById(data.userId) as unknown as any
     createContent(false, true, data.content)
   }
@@ -89,19 +99,31 @@ defineExpose({
 
 const initWebSocket = () => {
   ws.value.onopen = () => {
+    // define the event when receiving a new message
     ws.value.onmessage = async message => {
       console.log('chat websocket connected')
       chatText.value += message.data
 
       const userId = localStorage.getItem('id')
       const data = JSON.parse(message.data)
+
       console.log(data)
-      if (data.userId == userId) {
-        createContent(true, false, data.content)
+
+      // Normal msgs, the beginning and the end of the chat would all show on the chat panel
+      if (data.content.includes('just joined the chat') || data.content.includes('just quit the chat') || data.isMsg) {
+        // show the message on right side if the current user is the sender
+        if (data.userId == userId) {
+          createContent(true, false, data.content)
+        }
+        else {
+          remoteUser.value = await getUserById(data.userId) as unknown as any
+          createContent(false, true, data.content)
+        }
       }
+
+      // if the message is wordcloud, render it
       else {
-        remoteUser.value = await getUserById(data.userId) as unknown as any
-        createContent(false, true, data.content)
+        echartsStore.updateChart(JSON.parse(data.content))
       }
     }
     ws.value.onerror = e => {
@@ -113,21 +135,19 @@ const initWebSocket = () => {
   }
 }
 
+// make the chat component always on the bottom when receiving a new message
 const scrollToBottom = () => {
   const container = document.getElementById('chatPanel')!
 
   container.scrollTop = container.scrollHeight
 }
 
+// Hearbeat: send a message that will not be sent to other users to the server on a certain interval
 const sendMessagePing = () => {
   if (ws.value && ws.value.readyState === WebSocket.OPEN)
     ws.value.send('ping')
   else
     console.log('WebSocket has lost connection~')
-}
-
-const isEmpty = (msg: string) => {
-  return msg === null || msg.match(/^ *$/) !== null
 }
 
 const sendMsg = () => {
@@ -136,8 +156,6 @@ const sendMsg = () => {
   ws.value.send(inputText.value)
   inputText.value = ''
 }
-
-const activeName = ref('first')
 
 const handleClick = (tab: TabsPaneContext, event: Event) => {
   console.log(tab, event)
@@ -155,7 +173,7 @@ onBeforeUnmount(() => {
 })
 watch(() => content.value, val => {
   nextTick(() => {
-    scrollToBottom() // 保持聊天消息始终在最底部
+    scrollToBottom()
   })
 })
 </script>

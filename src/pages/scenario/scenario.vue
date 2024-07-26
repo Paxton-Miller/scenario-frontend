@@ -147,7 +147,7 @@ watch(() => toolBarRef.value?.dimension, async val => {
         {{ scenario?.name }} -- Collaborative Communication
       </h3>
     </div>
-    <!-- 流程图工具栏 -->
+    <!-- FlowGraph ToolBar -->
     <div class="toolbar">
       <ToolBar
         v-if="true"
