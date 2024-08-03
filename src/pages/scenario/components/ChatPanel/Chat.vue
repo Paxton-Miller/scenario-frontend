@@ -14,6 +14,9 @@ import CollaboratorTable from '@/pages/invite-collaboration/components/Collabora
 import { useDimensionStore } from '@/store/dimension'
 import { useEChartsStore } from '@/store/echarts'
 import { isEmpty } from '@/utils/StringTool'
+import { getScenarioById } from '@/api/ScenarioApi'
+import type { Scenario } from '@/api/class/Scenario'
+import WordCloud from '@/pages/scenario/components/ToolPanel/WordCloud.vue'
 
 const props = defineProps({
   scenarioId: {
@@ -25,6 +28,7 @@ const props = defineProps({
   },
 })
 
+const route = useRoute()
 const store = useDimensionStore()
 const echartsStore = useEChartsStore()
 
@@ -32,6 +36,9 @@ const echartsStore = useEChartsStore()
 const ws = ref(new WebSocket(`ws://localhost:8898/chatWs/${store.roomUUID}?token=${localStorage.getItem('token').substring(7)}`))
 const imgRef = ref()
 const popoverRef = ref()
+
+// To solve the problem that the Collaborator Panel doesn't update automatically
+const showCollaborator = ref<boolean>(false)
 
 const onClickOutside = () => {
   unref(popoverRef).popperRef?.delayHide?.()
@@ -167,6 +174,11 @@ onMounted(async () => {
     // 心跳机制，60秒一次
     sendMessagePing()
   }, 1000 * 60)
+
+  const userId = Number.parseInt(localStorage.getItem('id') as string)
+  const scenario = await getScenarioById(route.query.id as unknown as number) as unknown as Scenario
+  if (scenario.createUserId === userId)
+    showCollaborator.value = true
 })
 onBeforeUnmount(() => {
   ws.value.close()
@@ -184,10 +196,10 @@ watch(() => content.value, val => {
     class="demo-tabs"
     @tab-click="handleClick"
   >
-    <ElTabPane
-      label="Chat"
-      name="first"
-    >
+    <ElTabPane name="first">
+      <template #label>
+        <span style="font-size: smaller">Chat</span>
+      </template>
       <div
         style=" margin: 0 auto; background-color: white;
                     border-radius: 5px; box-shadow: 0 0 10px #ccc"
@@ -214,14 +226,24 @@ watch(() => content.value, val => {
       </div>
     </ElTabPane>
     <ElTabPane
-      label="Collaborator"
+      v-if="showCollaborator"
       name="second"
     >
+      <template #label>
+        <span style="font-size: smaller">Collaborator</span>
+      </template>
       <CollaboratorTable
+        v-if="showCollaborator"
         :room="props.room as any"
         :show-header="false"
         layout="prev, next, jumper"
       />
+    </ElTabPane>
+    <ElTabPane name="third">
+      <template #label>
+        <span style="font-size: smaller">WordCloud</span>
+      </template>
+      <WordCloud />
     </ElTabPane>
   </ElTabs>
 </template>

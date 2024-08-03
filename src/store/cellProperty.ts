@@ -18,11 +18,34 @@ export const useCellPropertyStore = defineStore('cellProperty', () => {
   const cell = ref<Cell>()
   const view = ref<CellView>()
 
+  const getName = () => {
+    let result
+    if (view.value?.cell.shape === 'edge')
+      result = (view.value?.cell as any).getLabels()[0]?.attrs.label.text
+    else if (view.value?.cell.shape.includes('text-block'))
+      result = (view.value?.cell as any).getAttrs().label.text
+    else
+      result = (view.value?.cell as any).getLabel()
+
+    return result
+  }
+
+  const setName = (name: string) => {
+    if (view.value?.cell.shape === 'edge')
+      (view.value?.cell as any).setLabels([{ attrs: { label: { text: name } } }])
+    else if (view.value?.cell.shape.includes('text-block'))
+      (view.value?.cell as any).setAttrs({ label: { text: name } })
+    else
+      (view.value?.cell as any).setLabel(name)
+  }
+
   return {
     e,
     x,
     y,
     cell,
     view,
+    getName,
+    setName,
   }
 })

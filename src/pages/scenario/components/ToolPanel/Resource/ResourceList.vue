@@ -144,17 +144,21 @@ onMounted(async () => {
         :span="6"
       >
         <div @mousedown="dragToGraph(item, $event)">
-          <ElTooltip
-            :disabled="showName"
-            :content="item.name"
-          >
-            <ElImage
-              :style="`width:${width};height:${height}`"
-              :src="item.url"
-              fit="fill"
-            />
-          </ElTooltip>
-          <span v-if="showName">{{ item.name }}</span>
+          <div class="align-center" style="margin-bottom: 5px">
+            <ElTooltip
+              :disabled="showName"
+              :content="item.name"
+            >
+              <ElImage
+                :style="`width:${width};height:${height}`"
+                :src="item.url"
+                fit="fill"
+              />
+            </ElTooltip>
+          </div>
+          <div class="align-center">
+            <span v-if="showName">{{ item.name }}</span>
+          </div>
         </div>
       </ElCol>
     </ElRow>
@@ -194,5 +198,10 @@ onMounted(async () => {
 .align-right {
   display: flex;
   justify-content: flex-end;
+}
+
+.align-center {
+  display: flex;
+  justify-content: center;
 }
 </style>

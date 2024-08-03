@@ -15,6 +15,10 @@ const ws = ref(null)
 const graph = ref<Graph>()
 const store = useDimensionStore()
 const onlineEditorStore = useOnlineEditorStore()
+const lastUpdateTime = ref<number>(0)
+const updateInterval = ref<number>(500)
+const messageBuffer = ref<string>('')
+const END_OF_MSG = '<EOF>' as string
 
 export const initWebSocket = (roomUUID: string, type: string) => {
   // if (roomUUID === undefined || type === undefined) return
@@ -26,70 +30,86 @@ export const initWebSocket = (roomUUID: string, type: string) => {
   }
 
   (ws.value as any).onmessage = async (message: any) => {
-    const data = JSON.parse(message.data)
+    messageBuffer.value += message.data
+    if (message.data.endsWith(END_OF_MSG)) {
+      const completeMsg = messageBuffer.value.split(END_OF_MSG)[0]
+      const data = JSON.parse(completeMsg)
 
-    // if the message is real content and the dimensions match.
-    if (data.isMsg && store.type === data.dimension) {
-      const json = JSON.parse(data.content)
+      // if the message is real content and the dimensions match.
+      if (data.isMsg && store.type === data.dimension) {
+        const json = JSON.parse(data.content)
 
-      // record the current editing user
-      onlineEditorStore.userId = data.userId
-      onlineEditorStore.isEditing = true
+        // record the current editing user
+        onlineEditorStore.userId = data.userId
+        onlineEditorStore.isEditing = true
 
-      if (json) {
-        console.log(json)
+        if (json) {
+          console.log(json)
 
-        /* eslint-disable */
-        // render the message as graph content
-        switch (json.event) {
-          case 'node:added':
-            FlowGraph.graph.addNode(json.data)
+          /* eslint-disable */
+          // render the message as graph content
+          switch (json.event) {
+            case 'node:added':
+              FlowGraph.graph.addNode(json.data)
 
-            // graph.value?.addNode(json.data)
-            break
-          case 'edge:connected':
-            FlowGraph.graph.addEdge(json.data)
-            break
-          case 'cell:removed':
-            FlowGraph.graph.removeCell(json.data)
-            break
-          case 'node:resized':
-            const resizingNode = FlowGraph.graph.getNodes().filter(node => node.id === json.data.id)[0]
+              // graph.value?.addNode(json.data)
+              break
+            case 'edge:connected':
+              FlowGraph.graph.addEdge(json.data)
+              break
+            case 'cell:removed':
+              FlowGraph.graph.removeCell(json.data)
+              break
+            case 'node:resized':
+              const resizingNode = FlowGraph.graph.getNodes().filter(node => node.id === json.data.id)[0]
 
-            resizingNode?.size(json.data.size.width, json.data.size.height)
+              resizingNode?.size(json.data.size.width, json.data.size.height)
 
-            // graph.value?.getNodes(json.data)[0].setSize(json.data.size)
-            break
-          case 'cell:change:attrs':
-            FlowGraph.graph.getCellById(json.data.id).setAttrs(json.data.attrs)
-            break
-          case 'cell:change:labels':
-            (FlowGraph.graph.getCellById(json.data.id) as any)?.setLabels(json.data?.labels)
-            break
-          case 'cell:change:data':
-            FlowGraph.graph.getCellById(json.data.id)?.setData(json.data?.data, { overwrite: true })
-            break
-          case 'node:moved':
-            const movedNode = FlowGraph.graph.getNodes().filter(node => node.id === json.data.id)[0]
+              // graph.value?.getNodes(json.data)[0].setSize(json.data.size)
+              break
+            case 'cell:change:attrs':
+              FlowGraph.graph.getCellById(json.data.id).setAttrs(json.data.attrs)
+              break
+            case 'cell:change:labels':
+              (FlowGraph.graph.getCellById(json.data.id) as any)?.setLabels(json.data?.labels)
+              break
+            case 'cell:change:data':
+              FlowGraph.graph.getCellById(json.data.id)?.setData(json.data?.data, { overwrite: true })
+              break
+            case 'node:moved':
+              const movedNode = FlowGraph.graph.getNodes().filter(node => node.id === json.data.id)[0]
 
-            movedNode?.position(json.data.position.x, json.data.position.y)
+              movedNode?.position(json.data.position.x, json.data.position.y)
 
-            // graph.value?.getNodes(json.data)[0].position(json.data.position.x, json.data.position.y)
-            break
+              // graph.value?.getNodes(json.data)[0].position(json.data.position.x, json.data.position.y)
+              break
 
-          // graph.value?.resetCells([json.data])
-          default:
-            break
+            // graph.value?.resetCells([json.data])
+            case 'view:change':
+              const mapNode = FlowGraph.graph.getNodes().filter(node => node.id === json.data.id)[0]
+
+              // No.2 After the following, turn to change:data in MapNode.vue
+              mapNode.setData({
+                view: {
+                  center: json.mapView.values_.center,
+                  zoom: json.mapView.values_.zoom,
+                },
+              })
+              break
+            default:
+              break
+          }
+          /* eslint-disable */
+        } else {
+          graph.value = FlowGraph.init({
+            cells: [],
+          })
         }
-        /* eslint-disable */
-      } else {
-        graph.value = FlowGraph.init({
-          cells: [],
-        })
+        console.log(json)
       }
-      console.log(json)
+      console.log(data)
+      messageBuffer.value = ''
     }
-    console.log(data)
   }
   (ws.value as any).onerror = (e: any) => {
     console.log(e)

@@ -1,17 +1,17 @@
 <!--
-  @name: MyResourceDialog
+  @name: MyMapDialog
   @description: TODO
   @author: Lingkai Shi
-  @date: 7/17/2024 2:21 PM
+  @date: 8/2/2024 11:21 AM
   @version: 1.0
 -->
 
 <script setup lang="ts">
-import { onMounted } from 'vue'
 import { Graph } from '@antv/x6'
 import { v4 as uuidv4 } from 'uuid'
+import { onMounted } from 'vue'
 import { addResource, uploadResource } from '@/api/ResourceApi'
-import ResourceList from '@/pages/scenario/components/ToolPanel/ResourceList.vue'
+import MapList from '@/pages/scenario/components/ToolPanel/Map/MapList.vue'
 
 defineProps({
   dialog: {
@@ -70,25 +70,16 @@ onMounted(() => {
     :before-close="() => emits('closeAdd')"
   >
     <template #header>
-      <span>My Resource</span>
+      <span>My Map</span>
     </template>
-    <ResourceList ref="listRef" />
-
-    <ElUpload
-      action=""
-      accept=".jpg,.png,.jpeg,.svg,"
-      :auto-upload="false"
-      class="upload-demo"
-      :on-change="handleChange"
-      :show-file-list="false"
-    >
-      <template #trigger>
-        <ElTooltip content="jpg,png,svg less than 200k are supported">
-          <ElButton type="primary">
-            Local Import
-          </ElButton>
-        </ElTooltip>
-      </template>
-    </ElUpload>
+    <MapList
+      ref="listRef"
+      width="100px"
+      height="100px"
+    />
   </ElDialog>
 </template>
+
+<style scoped lang="scss">
+
+</style>

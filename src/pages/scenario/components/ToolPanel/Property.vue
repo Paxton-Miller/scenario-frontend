@@ -12,13 +12,16 @@ import { sendMsg } from '@/pages/scenario/components/Collaborate'
 import { saveGraph } from '@/pages/scenario/components/Graph'
 
 const store = useCellPropertyStore()
+const { getName, setName } = useCellPropertyStore()
 
 // Use ElEmpty component when the panel is blank
 const isBlank = ref<boolean>(true)
+const hasDescForm = ref<boolean>(true)
 
 // The interface for semantic description and other future stuff
 interface Description {
   semantic: string
+  location: string
 }
 
 // The interface for custom description of attribute
@@ -32,26 +35,12 @@ const name = ref<string>('')
 
 const descEg: Description = {
   semantic: '',
+  location: '',
 }
 
 const descForm = ref<Description>({})
 
 const customItemList = ref<CustomItem[]>([])
-
-// get and set the name of the node
-const getName = () => {
-  if (store.view?.cell.shape === 'edge')
-    name.value = (store.view?.cell as any).getLabels()[0]?.attrs.label.text
-  else
-    name.value = (store.view?.cell as any).getLabel()
-}
-
-const setName = () => {
-  if (store.view?.cell.shape === 'edge')
-    (store.view?.cell as any).setLabels([{ attrs: { label: { text: name.value } } }])
-  else
-    (store.view?.cell as any).setLabel(name.value)
-}
 
 // disable editing the label of the custom attribute
 const disableEditing = (item: any) => {
@@ -63,38 +52,40 @@ const disableEditing = (item: any) => {
 // get the description information
 const getDescForm = () => {
   const jsonData = (store.view?.cell as any).getData()
-
-  // 得到与 descForm 相同的属性键值对
-  const sameProperties = Object.keys(descEg)
-  const filteredData = {}
-  for (const [key, value] of Object.entries(jsonData)) {
-    if (sameProperties.includes(key))
-      filteredData[key] = value
+  if (jsonData) {
+    // 得到与 descForm 相同的属性键值对
+    const sameProperties = Object.keys(descEg)
+    const filteredData = {}
+    for (const [key, value] of Object.entries(jsonData)) {
+      if (sameProperties.includes(key))
+        filteredData[key] = value
+    }
+    Object.assign(descForm.value, filteredData)
   }
-  Object.assign(descForm.value, filteredData)
 }
 
 // get the custom attribute information
 const getCustomItemList = () => {
   const jsonData = (store.view?.cell as any).getData()
+  if (jsonData) {
+    // 得到与 descForm 相同的属性键值对
+    const sameProperties = Object.keys(descEg)
+    const filteredData = {}
+    for (const [key, value] of Object.entries(jsonData)) {
+      if (!sameProperties.includes(key))
+        filteredData[key] = value
+    }
 
-  // 得到与 descForm 相同的属性键值对
-  const sameProperties = Object.keys(descEg)
-  const filteredData = {}
-  for (const [key, value] of Object.entries(jsonData)) {
-    if (!sameProperties.includes(key))
-      filteredData[key] = value
+    // 将剩余的键值对转化为 { label: '', value: '' } 型的数组
+    const resultArray = Object.keys(filteredData).map(key => ({
+      label: key,
+      value: filteredData[key],
+      isEditing: false,
+    }))
+
+    customItemList.value = resultArray
+    console.log(customItemList.value)
   }
-
-  // 将剩余的键值对转化为 { label: '', value: '' } 型的数组
-  const resultArray = Object.keys(filteredData).map(key => ({
-    label: key,
-    value: filteredData[key],
-    isEditing: false,
-  }))
-
-  customItemList.value = resultArray
-  console.log(customItemList.value)
 }
 
 // set the description and the custom attribute information
@@ -116,8 +107,9 @@ const setDescFormAndCustomItemList = () => {
 
 // apply the changes made by user
 const applyChanges = () => {
-  setName()
-  setDescFormAndCustomItemList()
+  setName(name.value)
+  if (hasDescForm.value)
+    setDescFormAndCustomItemList()
 }
 
 // add a custom attribute
@@ -144,7 +136,11 @@ const deleteProperty = (index: number) => {
 watch(() => store.e, val => {
   // listen to the store.e, when triggering the node:click event, refresh the property panel.
   if (val !== null) {
-    getName()
+    name.value = getName()
+    if (store.view?.cell.shape.includes('text-block'))
+      hasDescForm.value = false
+    else
+      hasDescForm.value = true
     getDescForm()
     getCustomItemList()
     isBlank.value = false
@@ -167,13 +163,24 @@ watch(() => store.e, val => {
       label="Name"
       prop="name"
     >
-      <ElInput v-model="name" />
+      <ElInput
+        v-model="name"
+        :type="hasDescForm ? 'text' : 'textarea'"
+      />
     </ElFormItem>
     <ElFormItem
+      v-if="hasDescForm"
       label="Semantic"
       prop="semantic"
     >
       <ElInput v-model="descForm.semantic" />
+    </ElFormItem>
+    <ElFormItem
+      v-if="hasDescForm"
+      label="Location"
+      prop="location"
+    >
+      <ElInput v-model="descForm.location" />
     </ElFormItem>
     <ElFormItem
       v-for="(item, index) in customItemList"
@@ -217,6 +224,7 @@ watch(() => store.e, val => {
     class="align-right"
   >
     <ElButton
+      v-if="hasDescForm"
       size="small"
       @click="addProperty"
     >

@@ -2,8 +2,10 @@ import { ElButton, ElDropdown } from 'element-plus'
 import { ToolsView } from '@antv/x6'
 import { createApp } from 'vue'
 import { useContextMenuStore } from '@/store/contextMenu'
+import { useGraphPermission } from '@/store/graphPermission'
 
 const store = useContextMenuStore()
+const graphPermission = useGraphPermission()
 
 // ContextMenu挂载的Vue实例
 let app: any = null
@@ -56,7 +58,6 @@ class ContextMenuTool extends ToolsView.ToolItem {
   }
 
   onContextMenu({ e, x, y, cell, view }: any) {
-    // eslint-disable-next-line no-restricted-syntax
     // debugger
     if (timer) {
       clearTimeout(timer)
@@ -69,7 +70,9 @@ class ContextMenuTool extends ToolsView.ToolItem {
     // store.cell = cell
     // store.view = view
     Object.assign(store, { e, x, y, cell, view })
-    this.toggleContextMenu(true, { x: e.pageX + 40, y: e.pageY })
+
+    // decide if toggling the contextmenu depending on the isWrite permission
+    this.toggleContextMenu(graphPermission.isWrite, { x: e.pageX + 40, y: e.pageY })
   }
 
   delegateEvents() {

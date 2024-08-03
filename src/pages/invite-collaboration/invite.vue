@@ -7,38 +7,47 @@
 -->
 
 <script setup lang="ts">
-import { addRoomCollaborator, getRoomByUUId } from '@/api/RoomApi'
+import { ref } from 'vue'
+import { getRoomByUUId } from '@/api/RoomApi'
+import { addRoomCollaborator, getCollaboratorByRoomId } from '@/api/RoomCollaboratorApi'
 import type { Room } from '@/api/class/Room'
+import type { RoomCollaborator } from '@/api/class/RoomCollaborator'
 
 const route = useRoute()
 const router = useRouter()
 const room = ref<Room>()
+const collaborators = ref<RoomCollaborator[]>([])
 const isAlreadyACollaborator = ref<boolean>(false)
 
 const checkIdentity = async () => {
   // First, check if I’m already a collaborator of the scenario.
-  const result = await getRoomByUUId(route.query.roomUUId as string) as unknown as Room
-  if (result)
-    room.value = result
-  const regex = new RegExp(`(^|,)${localStorage.getItem('id') as number}(,|$)`)
-  if (regex.test(room.value?.collaborator as string))
-    isAlreadyACollaborator.value = true
+  const result1 = await getRoomByUUId(route.query.roomUUId as string) as unknown as Room
+  if (result1)
+    room.value = result1
+  const result2 = await getCollaboratorByRoomId(room.value?.id as unknown as number) as unknown as RoomCollaborator[]
+  if (result2)
+    collaborators.value = result2
+  let flag = false
+  for (const value of collaborators.value) {
+    if (value.userId === Number.parseInt(localStorage.getItem('id') as string))
+      flag = true
+  }
+  isAlreadyACollaborator.value = flag
 }
 
 const handleJoin = async () => {
   const param = {
-    uuid: route.query.roomUUId,
-    collaboratorList: [],
+    permissionLevel: room.value.isLinkWrite ? 'write' : 'read',
+    roomId: room.value?.id,
+    userId: Number.parseInt(localStorage.getItem('id') as string),
   }
-
-  param.collaboratorList.push(localStorage.getItem('id'))
 
   const result = await addRoomCollaborator(param) as unknown as Room
   if (result) {
     ElMessage.success('Let\'s collaborate!')
     await router.push({
       name: 'Scenario',
-      query: { id: result.scenarioId },
+      query: { id: room.value.scenarioId, roomUUID: room.value?.uuid },
     })
   }
 }
@@ -46,7 +55,7 @@ const handleJoin = async () => {
 const handleEnter = async () => {
   await router.push({
     name: 'Scenario',
-    query: { id: room.value?.scenarioId },
+    query: { id: room.value?.scenarioId, roomUUID: room.value?.uuid },
   })
 }
 

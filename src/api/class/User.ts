@@ -1,5 +1,4 @@
-import type { PageResponse } from '@/api/class/Common'
-import { Room } from '@/api/class/Room'
+import type { BaseEntity, PageResponse } from '@/api/class/Common'
 
 /**
  * @name: Login
@@ -52,6 +51,14 @@ export interface SessionWebUser {
   type: number
   token: string
   exp: number
+}
+
+export interface User extends BaseEntity {
+  email: string
+  type: number
+  name: string
+  isEnable: boolean
+  avatar: string
 }
 
 export interface GetAllUserResponse extends PageResponse {

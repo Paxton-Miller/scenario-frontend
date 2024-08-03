@@ -2,11 +2,13 @@
 import { DataUri } from '@antv/x6'
 import { ref } from 'vue'
 import FlowGraph from '../Graph'
-import { saveScenarioGraphJsonByIdAndType } from '@/api/ScenarioApi'
+import { getScenarioById, saveScenarioGraphJsonByIdAndType } from '@/api/ScenarioApi'
 import type { ElementOption } from '@/pages/common/class/ElOption'
 import LinkDialog from '@/pages/invite-collaboration/components/LinkDialog.vue'
 import { useOnlineEditorStore } from '@/store/onlineEditor'
 import { getUserById } from '@/api/UserApi'
+import type { Scenario } from '@/api/class/Scenario'
+import { useGraphPermission } from '@/store/graphPermission'
 
 const route = useRoute()
 const linkDialog = ref<boolean>(false)
@@ -14,6 +16,8 @@ const dimension = ref<string>('time')
 const store = useOnlineEditorStore()
 const user = ref()
 const isTimeout = ref<boolean>(true)
+const graphPermissionStore = useGraphPermission()
+const showCollaborator = ref<boolean>(false)
 
 defineExpose({
   dimension,
@@ -144,6 +148,13 @@ watch(() => store.isEditing, async val => {
     }, 5000)
   }
 })
+
+onMounted(async () => {
+  const userId = Number.parseInt(localStorage.getItem('id') as string)
+  const scenario = await getScenarioById(route.query.id as unknown as number) as unknown as Scenario
+  if (scenario.createUserId === userId)
+    showCollaborator.value = true
+})
 </script>
 
 <template>
@@ -220,6 +231,7 @@ watch(() => store.isEditing, async val => {
       content="share"
     >
       <ElIcon
+        v-if="showCollaborator"
         style="margin: 5px; cursor: pointer;"
         @click="linkDialog = true"
       >
@@ -231,6 +243,7 @@ watch(() => store.isEditing, async val => {
       content="save"
     >
       <ElIcon
+        v-if="graphPermissionStore.isWrite"
         style="margin: 5px; cursor: pointer;"
         @click="saveGraph"
       >

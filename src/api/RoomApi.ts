@@ -17,17 +17,6 @@ export const getRoomByUUId = (uuid: string) => {
   return instance.get(`${roomApi}/room/getByUUID?uuid=${uuid}`)
 }
 
-export const addRoomCollaborator = (param: any) => {
-  return instance.post(`${roomApi}/room/addCollaborator`, param)
-}
-
-export const delRoomCollaborator = (param: any) => {
-  return instance.post(`${roomApi}/room/delCollaborator`, param)
-}
-
-export const getScenarioInvolvedIn = (page: number, pageSize: number) => {
-  if (page === undefined || pageSize === undefined)
-    return instance.get(`${roomApi}/room/getScenarioInvolvedIn`)
-  else
-    return instance.get(`${roomApi}/room/getScenarioInvolvedIn?page=${page}&pageSize=${pageSize}`)
+export const editRoom = (param: any) => {
+  return instance.post(`${roomApi}/room/edit`, param)
 }

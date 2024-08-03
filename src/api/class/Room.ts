@@ -9,8 +9,8 @@ import { Project } from '@/api/class/Project'
  * @version: 1.0
  */
 export interface Room extends BaseEntity {
-  collaborator: string
-  permissionLevel: string
+  isLinkWrite: boolean
+  limitation: number
   uuid: string
   scenarioId: number
 }

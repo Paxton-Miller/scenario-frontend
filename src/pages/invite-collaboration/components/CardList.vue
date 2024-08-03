@@ -10,8 +10,10 @@
 import { onMounted, ref } from 'vue'
 import { ElMessageBox } from 'element-plus'
 import NoData from '@/pages/common/NoData.vue'
-import { delRoomCollaborator, getScenarioInvolvedIn } from '@/api/RoomApi'
+import { delRoomCollaborator, getScenarioInvolvedIn } from '@/api/RoomCollaboratorApi'
 import type { GetScenarioWithProjectResponse, ScenarioWithProject } from '@/api/class/Scenario'
+import { getRoomByUUId } from '@/api/RoomApi'
+import type { Room } from '@/api/class/Room'
 
 const props = defineProps({
   queryContent: {
@@ -39,8 +41,16 @@ const handleDel = async (item: any) => {
     return
   }
 
+  const room = await getRoomByUUId(item.roomUUID) as unknown as Room
+
+  if (!room) {
+    ElMessage.warning('Unable to find the collaboration information')
+
+    return
+  }
+
   const result = await delRoomCollaborator({
-    uuid: item.roomUUID,
+    roomId: room?.id,
     userId: localStorage.getItem('id'),
   })
 

@@ -25,6 +25,9 @@ import { getRoomByScenarioId } from '@/api/RoomApi'
 import type { Room } from '@/api/class/Room'
 import { initWebSocket, onClose, sendMessagePing } from '@/pages/scenario/components/Collaborate'
 import { useDimensionStore } from '@/store/dimension'
+import { getCollaboratorByRoomId } from '@/api/RoomCollaboratorApi'
+import { GetRoomCollaboratorResponse, RoomCollaborator } from '@/api/class/RoomCollaborator'
+import { useGraphPermission } from '@/store/graphPermission'
 
 // const ws = ref(null)
 
@@ -32,13 +35,14 @@ const route = useRoute()
 const scenario = ref<Scenario>()
 // const graph = ref<Graph>()
 const room = ref<Room>()
+const collaborators = ref<RoomCollaborator[]>()
 const isAlreadyACollaborator = ref<boolean>(true)
 const isReady = ref(false)
 const toolBarRef = ref()
 const chatRef = ref()
 const store = useDimensionStore()
 const isFirstTime = ref<boolean>(true)
-const drawer = ref<boolean>(false)
+const graphPermissionStore = useGraphPermission()
 
 const getRoom = async () => {
   const result = await getRoomByScenarioId(scenario.value?.id as number) as unknown as Room
@@ -48,12 +52,24 @@ const getRoom = async () => {
 
 const checkIdentity = async () => {
   // Check if the user is the collaborator of the scenario?
-  const result = await getRoomByScenarioId(route.query.id as unknown as number) as unknown as Room
-  if (result)
-    room.value = result
-  const regex = new RegExp(`(^|,)${localStorage.getItem('id') as number}(,|$)`)
-  if (!regex.test(room.value?.collaborator as string))
-    isAlreadyACollaborator.value = false
+  const result1 = await getRoomByScenarioId(route.query.id as unknown as number) as unknown as Room
+  if (result1)
+    room.value = result1
+  const result2 = await getCollaboratorByRoomId(room.value?.id as unknown as number) as unknown as RoomCollaborator[]
+  if (result2)
+    collaborators.value = result2
+  let flag = false
+  for (let valueElement of collaborators.value!) {
+    if (valueElement.userId === Number.parseInt(localStorage.getItem('id') as string)) {
+      flag = true
+      graphPermissionStore.permissionLevel = valueElement.permissionLevel
+      if (valueElement.permissionLevel === 'write' || valueElement.permissionLevel === 'admin')
+        graphPermissionStore.isWrite = true
+      else
+        graphPermissionStore.isWrite = false
+    }
+  }
+  isAlreadyACollaborator.value = flag
 }
 
 const getContainerSize = () => {
@@ -68,14 +84,14 @@ const initGraph = async () => {
   const data = await getScenarioGraphJsonByIdAndType(route.query.id as unknown as number, toolBarRef.value.dimension)
   if (data) {
     // graph.value = FlowGraph.init(data)
-    FlowGraph.graph = FlowGraph.init(data)
+    FlowGraph.graph = FlowGraph.init(data, graphPermissionStore.isWrite)
   } else {
     // graph.value = FlowGraph.init({
     //   cells: [],
     // })
     FlowGraph.graph = FlowGraph.init({
       cells: [],
-    })
+    }, graphPermissionStore.isWrite)
   }
 
   const resizeFn = () => {

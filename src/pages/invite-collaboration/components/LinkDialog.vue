@@ -10,7 +10,7 @@
 import { ref } from 'vue'
 import type { Room } from '@/api/class/Room'
 import CollaboratorTable from '@/pages/invite-collaboration/components/CollaboratorTable.vue'
-import { getRoomByScenarioId } from '@/api/RoomApi'
+import { editRoom, getRoomByScenarioId } from '@/api/RoomApi'
 
 const props = defineProps({
   dialog: {
@@ -27,6 +27,7 @@ const emits = defineEmits(['closeAdd'])
 
 const room = ref<Room>()
 const isReady = ref<boolean>(false)
+const isLinkWrite = ref<boolean>()
 
 const copyLink = () => {
   const link = `http://localhost:8080/invite?roomUUId=${room.value?.uuid}`
@@ -40,7 +41,8 @@ const copyLink = () => {
     const msg = successful ? 'successful' : 'unsuccessful'
 
     ElMessage.success('copied')
-  } catch (err) {
+  }
+  catch (err) {
     console.error('Oops, unable to copy', err)
   }
 
@@ -52,7 +54,16 @@ const getRoom = async () => {
   if (result) {
     room.value = result
     isReady.value = true
+    isLinkWrite.value = room.value.isLinkWrite
   }
+}
+
+const handleChange = () => {
+  room.value.isLinkWrite = isLinkWrite.value as boolean
+
+  const result = editRoom(room.value) as unknown as Room
+  if (result === undefined)
+    ElMessage.warning('Operation failed')
 }
 
 onMounted(async () => {
@@ -75,8 +86,18 @@ onMounted(async () => {
     />
     <template #footer>
       <span>
-        Anyone who gets the link can edit the scenario
+        Anyone who gets the link is able to
       </span>
+      <ElSwitch
+        v-model="isLinkWrite"
+        class="ml-2"
+        inline-prompt
+        style="--el-switch-on-color: #13ce66; --el-switch-off-color: lightblue"
+        active-text="edit"
+        inactive-text="read"
+        @change="handleChange"
+      />
+      &nbsp;&nbsp;
       <ElButton
         type="primary"
         @click="copyLink"

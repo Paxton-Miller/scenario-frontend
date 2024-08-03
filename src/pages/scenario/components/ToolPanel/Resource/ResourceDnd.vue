@@ -8,8 +8,8 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import ResourceList from '@/pages/scenario/components/ToolPanel/ResourceList.vue'
-import MyResourceDialog from '@/pages/scenario/components/ToolPanel/MyResourceDialog.vue'
+import ResourceList from '@/pages/scenario/components/ToolPanel/Resource/ResourceList.vue'
+import MyResourceDialog from '@/pages/scenario/components/ToolPanel/Resource/MyResourceDialog.vue'
 
 const myResourceDialog = ref<boolean>(false)
 const activeName = ref('1')
@@ -26,7 +26,7 @@ const handleCloseAdd = async (newInfo: any) => {
   >
     <ElCollapseItem name="1">
       <template #title>
-        My Map Resource
+        My Resource
         <ElIcon
           style="margin: 5px; cursor: pointer;"
           @click="myResourceDialog = true"
@@ -42,7 +42,7 @@ const handleCloseAdd = async (newInfo: any) => {
       />
     </ElCollapseItem>
     <ElCollapseItem
-      title="More Map Resource"
+      title="More Resource"
       name="2"
     >
       <ResourceList

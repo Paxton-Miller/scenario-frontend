@@ -17,6 +17,7 @@ import { sendMsg } from '@/pages/scenario/components/Collaborate'
 import { saveScenarioGraphJsonByIdAndType } from '@/api/ScenarioApi'
 import { useDimensionStore } from '@/store/dimension'
 import { useCellPropertyStore } from '@/store/cellProperty'
+import { useGraphPermission } from '@/store/graphPermission'
 
 const history = new History({
   enabled: true,
@@ -27,6 +28,7 @@ const cellPropertyStore = useCellPropertyStore()
 const dimensionStore = useDimensionStore()
 const canUndo = ref(true)
 const canRedo = ref(false)
+const graphPermissionStore = useGraphPermission()
 
 const deleteCell = () => {
   // use variables recorded in store to delete cell
@@ -110,8 +112,18 @@ export default class FlowGraph {
           },
         ],
       },
+      interacting: {
+        nodeMovable: graphPermissionStore.isWrite,
+        edgeMovable: graphPermissionStore.isWrite,
+        edgeLabelMovable: graphPermissionStore.isWrite,
+        vertexAddable: graphPermissionStore.isWrite,
+        vertexDeletable: graphPermissionStore.isWrite,
+        vertexMovable: graphPermissionStore.isWrite,
+        magnetConnectable: graphPermissionStore.isWrite,
+        arrowheadMovable: graphPermissionStore.isWrite,
+      },
       mousewheel: {
-        enabled: true,
+        enabled: graphPermissionStore.isWrite,
         modifiers: ['ctrl', 'meta'],
         minScale: 0.5,
         maxScale: 5,
@@ -179,7 +191,9 @@ export default class FlowGraph {
       },
     })
     this.graph?.clearCells()
-    this.initAddon()
+    if (graphPermissionStore.isWrite)
+      this.initAddon()
+
     this.initStencil()
     this.initShape()
     this.initGraphShape(data)
@@ -301,6 +315,15 @@ export default class FlowGraph {
           graphHeight: 260,
         },
         {
+          name: 'text',
+          title: 'Text Nodes',
+          layoutOptions: {
+            columns: 1,
+            marginX: 50,
+          },
+          graphHeight: 240,
+        },
+        {
           name: 'group',
           title: 'Node Group',
           graphHeight: 100,
@@ -310,6 +333,9 @@ export default class FlowGraph {
           },
         },
       ],
+
+      // set the node isDrag depending on isWrite
+      getDragNode: graphPermissionStore.isWrite ? node => node.clone() : () => null,
     })
 
     const stencilContainer = document.querySelector('#stencil')
@@ -333,6 +359,7 @@ export default class FlowGraph {
       },
       data: {
         semantic: '',
+        location: '',
       },
     })
 
@@ -345,6 +372,7 @@ export default class FlowGraph {
       },
       data: {
         semantic: '',
+        location: '',
       },
     })
 
@@ -402,6 +430,7 @@ export default class FlowGraph {
       },
       data: {
         semantic: '',
+        location: '',
       },
     })
 
@@ -420,6 +449,7 @@ export default class FlowGraph {
       },
       data: {
         semantic: '',
+        location: '',
       },
     })
 
@@ -427,6 +457,7 @@ export default class FlowGraph {
       shape: 'flow-chart-image-rect',
       data: {
         semantic: '',
+        location: '',
       },
     })
 
@@ -434,6 +465,7 @@ export default class FlowGraph {
       shape: 'flow-chart-title-rect',
       data: {
         semantic: '',
+        location: '',
       },
     })
 
@@ -441,7 +473,23 @@ export default class FlowGraph {
       shape: 'flow-chart-animate-text',
       data: {
         semantic: '',
+        location: '',
       },
+    })
+
+    const t1 = graph.createNode({
+      shape: 'flow-text-block',
+      text: 'This is a transparent text-block.',
+    })
+
+    const t2 = graph.createNode({
+      shape: 'flow-accent-text-block',
+      text: 'This is an emphatic text-block.',
+    })
+
+    const t3 = graph.createNode({
+      shape: 'flow-outline-text-block',
+      text: 'This is a contoured text-block.',
     })
 
     const g1 = graph.createNode({
@@ -454,11 +502,13 @@ export default class FlowGraph {
       data: {
         parent: true,
         semantic: '',
+        location: '',
       },
     })
 
     this.stencil.load([r1, r2, r3, r4], 'basic')
     this.stencil.load([c1, c2, c3], 'combination')
+    this.stencil.load([t1, t2, t3], 'text')
     this.stencil.load([g1], 'group')
   }
 
@@ -478,7 +528,6 @@ export default class FlowGraph {
     // register contextmenu tool
     Graph.registerNodeTool('contextmenu', ContextMenuTool, true)
     Graph.registerEdgeTool('contextmenu', ContextMenuTool, true)
-
     graph.on('node:mouseenter',
       FunctionExt.debounce(() => {
         const ports = container.querySelectorAll('.x6-port-body') as NodeListOf<SVGAElement>
