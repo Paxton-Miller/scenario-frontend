@@ -12,10 +12,11 @@ import { inject, onMounted, ref } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
 import { fromLonLat } from 'ol/proj'
 import type { Feature, View } from 'ol'
+import { Fill, Stroke, Style, Text } from 'ol/style'
 import { addMap, getAllOpenMap } from '@/api/MapApi'
 import type { GetAllMapResponse, Map } from '@/api/class/Map'
 import { addGeoJson, addGeoJsonByFile } from '@/api/GeoJsonApi'
-import { Fill, Stroke, Style, Text } from 'ol/style'
+import { isEmpty } from '@/utils/StringTool'
 
 defineProps({
   dialog: {
@@ -60,7 +61,6 @@ const rules = reactive<FormRules>({
     { required: true, message: 'Please input map name', trigger: 'blur' },
   ],
   jsonContent: [
-    { required: true, message: 'Please input geojson content', trigger: 'blur' },
     {
       validator(rule, value, callback, source, options) {
         try {
@@ -73,7 +73,8 @@ const rules = reactive<FormRules>({
             callback()
         }
         catch (e) {
-          callback(new Error('Invalid GeoJSON format.'))
+          if (!isEmpty(value))
+            callback(new Error('Invalid GeoJSON format.'))
         }
       },
       trigger: 'blur',
